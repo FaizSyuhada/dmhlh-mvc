@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Content Manager - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h1 class="page-title">
+                        <span>📄</span> Content Manager
+                    </h1>
+                    <p class="page-subtitle">Manage learning modules and quizzes</p>
+                </div>
+                <a th:href="@{/admin/content/new}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New Module
+                </a>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Content Table -->
+            <div class="card hover-lift">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Order</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="module : ${modules}">
+                                    <td th:text="${module.title}">Title</td>
+                                    <td><span class="type-badge" th:text="${module.type}">TEXT</span></td>
+                                    <td>
+                                        <span class="status-badge" th:classappend="${module.status}" th:text="${module.status}">Status</span>
+                                    </td>
+                                    <td th:text="${module.displayOrder ?: '-'}">1</td>
+                                    <td style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                        <a th:href="@{/admin/content/{id}/edit(id=${module.id})}" class="btn btn-sm btn-outline">Edit</a>
+                                        <a th:href="@{/admin/content/{id}/quiz(id=${module.id})}" class="btn btn-sm btn-outline">Quiz</a>
+                                        <form th:action="@{/admin/content/{id}/delete(id=${module.id})}" method="post" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline" style="color: var(--accent-3);"
+                                                    onclick="return confirm('Delete this module?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <style>
+        .type-badge { background: var(--surface-2); color: var(--text-secondary); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; }
+    </style>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

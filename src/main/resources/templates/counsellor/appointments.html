@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Appointments - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-counsellor}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>📅</span> Appointments
+                </h1>
+                <p class="page-subtitle">Manage your counselling sessions</p>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Appointments Card -->
+            <div class="card hover-lift">
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(appointments)}" class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-title">No appointments</div>
+                        <div class="empty-state-description">You have no scheduled appointments.</div>
+                    </div>
+                    
+                    <div class="table-responsive" th:unless="${#lists.isEmpty(appointments)}">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date &amp; Time</th>
+                                    <th>Student</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="apt : ${appointments}">
+                                    <td th:text="${#temporals.format(apt.startAt, 'MMM dd, yyyy HH:mm')}">Date</td>
+                                    <td th:text="${apt.student.displayName}">Student</td>
+                                    <td>
+                                        <span class="status-badge" 
+                                              th:classappend="${apt.status}"
+                                              th:text="${apt.status}">Status</span>
+                                    </td>
+                                    <td th:text="${apt.reason ?: '-'}">Reason</td>
+                                    <td>
+                                        <a th:href="@{/counsellor/appointments/{id}(id=${apt.id})}" 
+                                           class="btn btn-sm btn-primary">View</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-counsellor}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-counsellor}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

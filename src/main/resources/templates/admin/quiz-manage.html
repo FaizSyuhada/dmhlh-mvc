@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Manage Quiz - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/content}">Content</a></li>
+                    <li class="breadcrumb-item active">Quiz</li>
+                </ol>
+            </nav>
+            
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>❓</span> Quiz: <span th:text="${module.title}">Module</span>
+                </h1>
+                <p class="page-subtitle">Manage quiz questions for this module</p>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Add Question Card -->
+            <div class="card hover-lift" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-plus-circle"></i> Add Question</span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/content/{id}/quiz/add(id=${module.id})}" method="post">
+                        <div class="grid grid-cols-2 gap-4" style="margin-bottom: 16px;">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Question *</label>
+                                <textarea class="form-control" name="question" rows="2" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option A *</label>
+                                <input type="text" class="form-control" name="optionA" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option B *</label>
+                                <input type="text" class="form-control" name="optionB" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option C *</label>
+                                <input type="text" class="form-control" name="optionC" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option D *</label>
+                                <input type="text" class="form-control" name="optionD" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Correct Answer *</label>
+                                <select class="form-select" name="correctOption" required>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="D">D</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Display Order</label>
+                                <input type="number" class="form-control" name="displayOrder">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Explanation</label>
+                                <textarea class="form-control" name="explanation" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus"></i> Add Question
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Questions List -->
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-list-ol"></i> Questions (<span th:text="${#lists.size(questions)}">0</span>)</span>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(questions)}" class="empty-state">
+                        <div class="empty-state-icon">❓</div>
+                        <div class="empty-state-title">No questions yet</div>
+                        <div class="empty-state-description">Add your first question above</div>
+                    </div>
+                    
+                    <div th:each="q, iter : ${questions}" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <h6 style="display: flex; align-items: flex-start; gap: 12px; margin: 0;">
+                                <span style="background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;" th:text="${iter.count}">1</span>
+                                <span th:text="${q.question}">Question</span>
+                            </h6>
+                            <form th:action="@{/admin/content/quiz/{id}/delete(id=${q.id})}" method="post">
+                                <input type="hidden" name="moduleId" th:value="${module.id}">
+                                <button type="submit" class="btn btn-sm btn-outline" style="color: var(--accent-3);" onclick="return confirm('Delete?')">Delete</button>
+                            </form>
+                        </div>
+                        <ul style="list-style: none; padding-left: 40px; margin: 0;">
+                            <li th:style="${q.correctOption == 'A'} ? 'color: var(--accent-2); font-weight: 600;' : ''">A. <span th:text="${q.optionA}">A</span></li>
+                            <li th:style="${q.correctOption == 'B'} ? 'color: var(--accent-2); font-weight: 600;' : ''">B. <span th:text="${q.optionB}">B</span></li>
+                            <li th:style="${q.correctOption == 'C'} ? 'color: var(--accent-2); font-weight: 600;' : ''">C. <span th:text="${q.optionC}">C</span></li>
+                            <li th:style="${q.correctOption == 'D'} ? 'color: var(--accent-2); font-weight: 600;' : ''">D. <span th:text="${q.optionD}">D</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

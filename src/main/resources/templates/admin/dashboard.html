@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Admin Dashboard')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>📊</span>
+                    Admin Dashboard
+                </h1>
+                <p class="page-subtitle">Platform overview and key metrics</p>
+            </div>
+            
+            <!-- KPI Cards -->
+            <div class="stats-row">
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-value" th:text="${kpis.totalUsers}">24</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.15), rgba(var(--accent-2-rgb), 0.05));">
+                        <i class="bi bi-mortarboard" style="color: var(--accent-2);"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-2), #a8d5ba); -webkit-background-clip: text;" 
+                         th:text="${kpis.totalStudents}">20</div>
+                    <div class="stat-label">Students</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(var(--accent-3-rgb), 0.15), rgba(var(--accent-3-rgb), 0.05));">
+                        <i class="bi bi-clipboard2-check" style="color: var(--accent-3);"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-3), #f4a58a); -webkit-background-clip: text;" 
+                         th:text="${kpis.totalAssessments}">156</div>
+                    <div class="stat-label">Assessments</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05));">
+                        <i class="bi bi-emoji-smile" style="color: #b45309;"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, #fbbf24, #fcd34d); -webkit-background-clip: text;" 
+                         th:text="${kpis.totalMoodLogs}">432</div>
+                    <div class="stat-label">Mood Logs</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));">
+                        <i class="bi bi-flag" style="color: #dc2626;"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, #ef4444, #f87171); -webkit-background-clip: text;" 
+                         th:text="${kpis.openReports}">3</div>
+                    <div class="stat-label">Open Reports</div>
+                </div>
+            </div>
+            
+            <!-- Main Grid -->
+            <div class="grid grid-cols-2 gap-4 card-grid">
+                <!-- Users by Role -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-pie-chart"></i>
+                            Users by Role
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, var(--accent), var(--accent-light)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="bi bi-mortarboard"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-weight: 500; color: var(--text);">Students</span>
+                                        <span style="font-weight: 600; color: var(--accent);" th:text="${kpis.totalStudents}">20</span>
+                                    </div>
+                                    <div style="height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 3px;"
+                                             th:style="'width: ' + ${(kpis.totalStudents / kpis.totalUsers) * 100} + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, var(--accent-2), #a8d5ba); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="bi bi-heart-pulse"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-weight: 500; color: var(--text);">Counsellors</span>
+                                        <span style="font-weight: 600; color: var(--accent-2);" th:text="${kpis.totalCounsellors}">2</span>
+                                    </div>
+                                    <div style="height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, var(--accent-2), #a8d5ba); border-radius: 3px;"
+                                             th:style="'width: ' + ${(kpis.totalCounsellors / kpis.totalUsers) * 100} + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, var(--accent-3), #f4a58a); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="bi bi-person-workspace"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-weight: 500; color: var(--text);">Faculty</span>
+                                        <span style="font-weight: 600; color: var(--accent-3);" th:text="${kpis.totalFaculty}">1</span>
+                                    </div>
+                                    <div style="height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, var(--accent-3), #f4a58a); border-radius: 3px;"
+                                             th:style="'width: ' + ${(kpis.totalFaculty / kpis.totalUsers) * 100} + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #fbbf24, #fcd34d); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #1a1a1a;">
+                                    <i class="bi bi-shield-lock"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span style="font-weight: 500; color: var(--text);">Admins</span>
+                                        <span style="font-weight: 600; color: #b45309;" th:text="${kpis.totalAdmins}">1</span>
+                                    </div>
+                                    <div style="height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden;">
+                                        <div style="height: 100%; background: linear-gradient(90deg, #fbbf24, #fcd34d); border-radius: 3px;"
+                                             th:style="'width: ' + ${(kpis.totalAdmins / kpis.totalUsers) * 100} + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Appointments by Status -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-calendar-check"></i>
+                            Appointments
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                            <div style="background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--accent-rgb), 0.03)); border-radius: 14px; padding: 20px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--accent);" 
+                                     th:text="${kpis.scheduledAppointments}">5</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Scheduled</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.1), rgba(var(--accent-2-rgb), 0.03)); border-radius: 14px; padding: 20px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--accent-2);" 
+                                     th:text="${kpis.completedAppointments}">12</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Completed</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(var(--accent-3-rgb), 0.1), rgba(var(--accent-3-rgb), 0.03)); border-radius: 14px; padding: 20px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--accent-3);" 
+                                     th:text="${kpis.cancelledAppointments}">2</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Cancelled</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.03)); border-radius: 14px; padding: 20px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: #b45309;" 
+                                     th:text="${kpis.totalAppointments}">19</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Total</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="card hover-lift" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-lightning"></i>
+                            Admin Actions
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions-grid">
+                            <a th:href="@{/admin/content}" class="quick-action-btn">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <span>Manage Content</span>
+                            </a>
+                            <a th:href="@{/admin/forum-settings}" class="quick-action-btn">
+                                <i class="bi bi-gear"></i>
+                                <span>Forum Settings</span>
+                            </a>
+                            <a th:href="@{/admin/integrations}" class="quick-action-btn">
+                                <i class="bi bi-plug"></i>
+                                <span>Integrations</span>
+                            </a>
+                            <a th:href="@{/moderation}" class="quick-action-btn">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Moderation</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

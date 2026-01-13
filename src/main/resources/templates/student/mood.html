@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Mood Journal')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/layout :: sidebar-student}"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>📔</span>
+                    Mood Journal
+                </h1>
+                <p class="page-subtitle">Track your emotional wellbeing over time</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Log New Mood -->
+                <div class="card fade-in" style="animation-delay: 0.1s;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-plus-circle"></i>
+                            How are you feeling right now?
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/student/mood/log}" method="post">
+                            <!-- Mood Scale -->
+                            <div style="margin-bottom: 24px;">
+                                <p style="font-weight: 500; margin-bottom: 16px; color: var(--text);">Select your mood:</p>
+                                <div style="display: flex; justify-content: space-between; gap: 8px;">
+                                    <label class="mood-option" style="flex: 1;">
+                                        <input type="radio" name="moodValue" value="1" required style="display: none;">
+                                        <div class="mood-option-box">
+                                            <span style="font-size: 2.5rem;">😢</span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Very Low</span>
+                                        </div>
+                                    </label>
+                                    <label class="mood-option" style="flex: 1;">
+                                        <input type="radio" name="moodValue" value="2" style="display: none;">
+                                        <div class="mood-option-box">
+                                            <span style="font-size: 2.5rem;">😔</span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Low</span>
+                                        </div>
+                                    </label>
+                                    <label class="mood-option" style="flex: 1;">
+                                        <input type="radio" name="moodValue" value="3" style="display: none;">
+                                        <div class="mood-option-box">
+                                            <span style="font-size: 2.5rem;">😐</span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Okay</span>
+                                        </div>
+                                    </label>
+                                    <label class="mood-option" style="flex: 1;">
+                                        <input type="radio" name="moodValue" value="4" style="display: none;">
+                                        <div class="mood-option-box">
+                                            <span style="font-size: 2.5rem;">🙂</span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Good</span>
+                                        </div>
+                                    </label>
+                                    <label class="mood-option" style="flex: 1;">
+                                        <input type="radio" name="moodValue" value="5" style="display: none;">
+                                        <div class="mood-option-box">
+                                            <span style="font-size: 2.5rem;">😊</span>
+                                            <span style="font-size: 0.8rem; color: var(--text-muted);">Great</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Note -->
+                            <div class="form-group">
+                                <label class="form-label" for="note">Add a note (optional)</label>
+                                <textarea class="form-control" id="note" name="note" rows="3"
+                                          placeholder="What's on your mind? What contributed to this feeling?"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                                <i class="bi bi-check-lg"></i>
+                                <span>Log Mood</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Mood History -->
+                <div class="card fade-in" style="animation-delay: 0.2s;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-calendar3"></i>
+                            Recent Entries
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${not #lists.isEmpty(moodLogs)}" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div th:each="log, iter : ${moodLogs}" th:if="${iter.index < 7}" 
+                                 style="display: flex; align-items: center; gap: 16px; padding: 14px; background: var(--surface-2); border-radius: 14px;">
+                                <span style="font-size: 2rem;" th:text="${log.moodEmoji}">😊</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; color: var(--text);" 
+                                         th:text="${#temporals.format(log.createdAt, 'EEEE, MMM dd')}">Monday, Jan 10</div>
+                                    <div th:if="${log.note}" style="font-size: 0.85rem; color: var(--text-secondary);"
+                                         th:text="${#strings.abbreviate(log.note, 50)}">Note preview...</div>
+                                    <div th:unless="${log.note}" style="font-size: 0.85rem; color: var(--text-muted);">No note added</div>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);"
+                                     th:text="${#temporals.format(log.createdAt, 'HH:mm')}">14:30</div>
+                            </div>
+                        </div>
+                        <div th:unless="${not #lists.isEmpty(moodLogs)}" class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div class="empty-state-title">No entries yet</div>
+                            <div class="empty-state-description">Start tracking your mood to see patterns over time.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        .mood-option-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 12px;
+            background: var(--surface-2);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mood-option-box:hover {
+            background: var(--bg-warm);
+            transform: translateY(-2px);
+        }
+        
+        .mood-option input:checked + .mood-option-box {
+            background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1), rgba(var(--accent-rgb), 0.05));
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2);
+        }
+    </style>
+</body>
+</html>

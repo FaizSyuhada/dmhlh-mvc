@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('New Module - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>➕</span> New Learning Module
+                </h1>
+                <p class="page-subtitle">Create a new educational module for students</p>
+            </div>
+            
+            <!-- Form Card -->
+            <div class="card hover-lift">
+                <div class="card-body" style="padding: 32px;">
+                    <form th:action="@{/admin/content/create}" method="post">
+                        <div class="grid grid-cols-2 gap-4" style="margin-bottom: 20px;">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Title *</label>
+                                <input type="text" class="form-control" name="title" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Display Order</label>
+                                <input type="number" class="form-control" name="displayOrder">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Type *</label>
+                                <select class="form-select" name="type" required>
+                                    <option th:each="t : ${types}" th:value="${t}" th:text="${t}">Type</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="description" rows="2"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" name="status" required>
+                                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">Status</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Video URL (YouTube embed)</label>
+                                <input type="url" class="form-control" name="videoUrl" placeholder="https://www.youtube.com/embed/...">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Body Content (HTML)</label>
+                                <textarea class="form-control" name="bodyContent" rows="10" style="font-family: monospace;"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--border);">
+                            <a th:href="@{/admin/content}" class="btn btn-outline">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Module
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

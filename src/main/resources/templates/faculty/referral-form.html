@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('New Referral - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-faculty}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/faculty/dashboard}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">New Referral</li>
+                </ol>
+            </nav>
+            
+            <!-- Error Message -->
+            <div th:if="${error}" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(224, 122, 95, 0.15); border: 1px solid rgba(224, 122, 95, 0.3); color: var(--accent-3);">
+                <i class="bi bi-exclamation-circle" style="margin-right: 8px;"></i>
+                <span th:text="${error}">Error</span>
+            </div>
+            
+            <!-- Form Card -->
+            <div class="card hover-lift" style="max-width: 800px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-person-plus"></i> Submit At-Risk Referral</span>
+                </div>
+                <div class="card-body" style="padding: 32px;">
+                    <!-- Info Banner -->
+                    <div style="background: rgba(124, 111, 174, 0.1); border: 1px solid rgba(124, 111, 174, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <span style="color: var(--accent);">ℹ️ This referral will be sent to our counselling team for review. Please ensure you have discussed this with the student and obtained their consent.</span>
+                    </div>
+                    
+                    <form th:action="@{/faculty/referrals/create}" method="post">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label">Student Email or ID *</label>
+                            <input type="text" class="form-control" name="studentIdentifier" placeholder="student@example.com" required>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label">Urgency Level *</label>
+                            <select class="form-select" name="urgency" required>
+                                <option value="">Select urgency...</option>
+                                <option th:each="u : ${urgencies}" th:value="${u}" th:text="${u}">Urgency</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label">Concern Summary *</label>
+                            <textarea class="form-control" name="summary" rows="4" placeholder="Please describe your concerns about this student's wellbeing..." required></textarea>
+                        </div>
+                        
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer;">
+                                <input type="checkbox" name="consentGiven" required style="width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent);">
+                                <span style="line-height: 1.5;">I confirm that I have discussed this referral with the student and they have given their consent for me to share this information with the counselling team.</span>
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--border);">
+                            <a th:href="@{/faculty/dashboard}" class="btn btn-outline">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Submit Referral
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-faculty}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-faculty}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

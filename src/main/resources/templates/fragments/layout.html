@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- ============================================
+     HEAD FRAGMENT
+     ============================================ -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:text="${title} + ' - Solace'">Solace Mental Health Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Solace Theme -->
+    <link th:href="@{/css/solace-theme.css}" rel="stylesheet">
+</head>
+
+<!-- ============================================
+     BACKWARD COMPATIBLE NAVBAR (empty, for old templates)
+     ============================================ -->
+<nav th:fragment="navbar"></nav>
+
+<!-- ============================================
+     ANIMATED BACKGROUND BLOBS
+     ============================================ -->
+<div th:fragment="blobs" class="blob-container">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+
+<!-- ============================================
+     MOBILE HEADER
+     ============================================ -->
+<header th:fragment="mobile-header" class="mobile-header">
+    <a href="/" class="mobile-header-brand">
+        <span class="mobile-logo-icon">✨</span>
+        <span>Solace</span>
+    </a>
+    <div class="mobile-header-actions">
+        <button class="btn-icon btn-ghost" onclick="toggleTheme()" title="Toggle theme">
+            <span class="theme-icon">☀️</span>
+        </button>
+        <form th:action="@{/logout}" method="post" style="margin: 0;" sec:authorize="isAuthenticated()">
+            <button type="submit" class="btn-icon btn-ghost" title="Logout">
+                <span>👤</span>
+            </button>
+        </form>
+    </div>
+</header>
+
+<!-- ============================================
+     MOBILE BOTTOM NAVIGATION
+     ============================================ -->
+<nav th:fragment="mobile-nav-student" class="mobile-nav">
+    <div class="mobile-nav-items">
+        <a th:href="@{/student/dashboard}" class="mobile-nav-item" data-page="dashboard">
+            <div class="mobile-icon home-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a th:href="@{/student/mood}" class="mobile-nav-item" data-page="mood">
+            <div class="mobile-icon journal-icon">📊</div>
+            <span>Journal</span>
+        </a>
+        <a th:href="@{/student/care-plan}" class="mobile-nav-item pet-nav" data-page="care-plan">
+            <div class="mobile-icon mochi-icon">😺</div>
+            <span>Mochi</span>
+        </a>
+        <a th:href="@{/student/modules}" class="mobile-nav-item" data-page="modules">
+            <div class="mobile-icon learn-icon">📚</div>
+            <span>Learn</span>
+        </a>
+        <button class="mobile-nav-item more-btn" onclick="toggleMobileMenu()">
+            <div class="mobile-icon more-icon">☰</div>
+            <span>More</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu Drawer -->
+<div th:fragment="mobile-menu-student" class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu(event)">
+    <div class="mobile-menu-drawer">
+        <div class="mobile-menu-header">
+            <h3>Menu</h3>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        </div>
+        <div class="mobile-menu-items">
+            <a th:href="@{/student/assessment}" class="mobile-menu-item">
+                <span class="menu-icon">📋</span>
+                <span>Self-Assessment</span>
+            </a>
+            <a th:href="@{/student/appointments}" class="mobile-menu-item">
+                <span class="menu-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a th:href="@{/student/ai-coach}" class="mobile-menu-item">
+                <span class="menu-icon">🤖</span>
+                <span>AI Coach</span>
+            </a>
+            <a th:href="@{/forum}" class="mobile-menu-item">
+                <span class="menu-icon">👥</span>
+                <span>Community Forum</span>
+            </a>
+        </div>
+        <div class="mobile-menu-footer" sec:authorize="isAuthenticated()">
+            <div class="mobile-menu-profile">
+                <div class="profile-avatar-sm">
+                    <span sec:authentication="principal.displayName" 
+                          th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'U'}">A</span>
+                </div>
+                <div class="profile-info-sm">
+                    <div sec:authentication="principal.displayName">User Name</div>
+                    <div class="profile-email-sm" sec:authentication="principal.email">email@example.com</div>
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="mobile-menu-logout">
+                    🚪 Sign Out
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MOBILE BOTTOM NAVIGATION - COUNSELLOR
+     ============================================ -->
+<nav th:fragment="mobile-nav-counsellor" class="mobile-nav">
+    <div class="mobile-nav-items">
+        <a th:href="@{/counsellor/dashboard}" class="mobile-nav-item" data-page="dashboard">
+            <div class="mobile-icon home-icon counsellor-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a th:href="@{/counsellor/appointments}" class="mobile-nav-item" data-page="appointments">
+            <div class="mobile-icon journal-icon">📅</div>
+            <span>Sessions</span>
+        </a>
+        <a th:href="@{/counsellor/referrals}" class="mobile-nav-item" data-page="referrals">
+            <div class="mobile-icon learn-icon">📋</div>
+            <span>Referrals</span>
+        </a>
+        <a th:href="@{/moderation}" class="mobile-nav-item" data-page="moderation">
+            <div class="mobile-icon more-icon">🛡️</div>
+            <span>Reports</span>
+        </a>
+        <button class="mobile-nav-item more-btn" onclick="toggleMobileMenu()">
+            <div class="mobile-icon more-icon">☰</div>
+            <span>More</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu Drawer - Counsellor -->
+<div th:fragment="mobile-menu-counsellor" class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu(event)">
+    <div class="mobile-menu-drawer">
+        <div class="mobile-menu-header">
+            <h3>Menu</h3>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        </div>
+        <div class="mobile-menu-items">
+            <a th:href="@{/forum}" class="mobile-menu-item">
+                <span class="menu-icon">👥</span>
+                <span>Community Forum</span>
+            </a>
+        </div>
+        <div class="mobile-menu-footer" sec:authorize="isAuthenticated()">
+            <div class="mobile-menu-profile">
+                <div class="profile-avatar-sm" style="background: linear-gradient(135deg, #81b29a, #a8d5ba);">
+                    <span sec:authentication="principal.displayName" 
+                          th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'C'}">C</span>
+                </div>
+                <div class="profile-info-sm">
+                    <div sec:authentication="principal.displayName">Counsellor</div>
+                    <div class="profile-email-sm" sec:authentication="principal.email">email@example.com</div>
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="mobile-menu-logout">
+                    🚪 Sign Out
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MOBILE BOTTOM NAVIGATION - FACULTY
+     ============================================ -->
+<nav th:fragment="mobile-nav-faculty" class="mobile-nav">
+    <div class="mobile-nav-items">
+        <a th:href="@{/faculty/dashboard}" class="mobile-nav-item" data-page="dashboard">
+            <div class="mobile-icon home-icon faculty-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a th:href="@{/faculty/referrals/new}" class="mobile-nav-item" data-page="referrals">
+            <div class="mobile-icon journal-icon">📝</div>
+            <span>Referral</span>
+        </a>
+        <div class="mobile-nav-item" style="visibility: hidden;"></div>
+        <div class="mobile-nav-item" style="visibility: hidden;"></div>
+        <button class="mobile-nav-item more-btn" onclick="toggleMobileMenu()">
+            <div class="mobile-icon more-icon">☰</div>
+            <span>More</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu Drawer - Faculty -->
+<div th:fragment="mobile-menu-faculty" class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu(event)">
+    <div class="mobile-menu-drawer">
+        <div class="mobile-menu-header">
+            <h3>Menu</h3>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        </div>
+        <div class="mobile-menu-items">
+            <a th:href="@{/faculty/dashboard}" class="mobile-menu-item">
+                <span class="menu-icon">🏠</span>
+                <span>Dashboard</span>
+            </a>
+            <a th:href="@{/faculty/referrals/new}" class="mobile-menu-item">
+                <span class="menu-icon">📝</span>
+                <span>Submit Referral</span>
+            </a>
+        </div>
+        <div class="mobile-menu-footer" sec:authorize="isAuthenticated()">
+            <div class="mobile-menu-profile">
+                <div class="profile-avatar-sm" style="background: linear-gradient(135deg, #e07a5f, #f4a58a);">
+                    <span sec:authentication="principal.displayName" 
+                          th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'F'}">F</span>
+                </div>
+                <div class="profile-info-sm">
+                    <div sec:authentication="principal.displayName">Faculty</div>
+                    <div class="profile-email-sm" sec:authentication="principal.email">email@example.com</div>
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="mobile-menu-logout">
+                    🚪 Sign Out
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     MOBILE BOTTOM NAVIGATION - ADMIN
+     ============================================ -->
+<nav th:fragment="mobile-nav-admin" class="mobile-nav">
+    <div class="mobile-nav-items">
+        <a th:href="@{/admin/dashboard}" class="mobile-nav-item" data-page="dashboard">
+            <div class="mobile-icon home-icon admin-icon">🏠</div>
+            <span>Home</span>
+        </a>
+        <a th:href="@{/admin/content}" class="mobile-nav-item" data-page="content">
+            <div class="mobile-icon journal-icon">📄</div>
+            <span>Content</span>
+        </a>
+        <a th:href="@{/admin/forum-settings}" class="mobile-nav-item" data-page="forum-settings">
+            <div class="mobile-icon learn-icon">⚙️</div>
+            <span>Settings</span>
+        </a>
+        <a th:href="@{/moderation}" class="mobile-nav-item" data-page="moderation">
+            <div class="mobile-icon more-icon">🛡️</div>
+            <span>Reports</span>
+        </a>
+        <button class="mobile-nav-item more-btn" onclick="toggleMobileMenu()">
+            <div class="mobile-icon more-icon">☰</div>
+            <span>More</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Mobile Menu Drawer - Admin -->
+<div th:fragment="mobile-menu-admin" class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu(event)">
+    <div class="mobile-menu-drawer">
+        <div class="mobile-menu-header">
+            <h3>Menu</h3>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+        </div>
+        <div class="mobile-menu-items">
+            <a th:href="@{/admin/integrations}" class="mobile-menu-item">
+                <span class="menu-icon">🔌</span>
+                <span>Integrations</span>
+            </a>
+        </div>
+        <div class="mobile-menu-footer" sec:authorize="isAuthenticated()">
+            <div class="mobile-menu-profile">
+                <div class="profile-avatar-sm" style="background: linear-gradient(135deg, #fbbf24, #fcd34d); color: #1a1a1a;">
+                    <span sec:authentication="principal.displayName" 
+                          th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'A'}">A</span>
+                </div>
+                <div class="profile-info-sm">
+                    <div sec:authentication="principal.displayName">Admin</div>
+                    <div class="profile-email-sm" sec:authentication="principal.email">email@example.com</div>
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="mobile-menu-logout">
+                    🚪 Sign Out
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     SIDEBAR - STUDENT
+     ============================================ -->
+<aside th:fragment="sidebar-student" class="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+            <span>✨</span>
+        </div>
+        <div class="sidebar-brand-text">
+            Sol<span>ace</span>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+        <p class="sidebar-nav-title">Main</p>
+        <a th:href="@{/student/dashboard}" class="nav-item" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+        </a>
+        <a th:href="@{/student/mood}" class="nav-item" data-page="mood">
+            <span class="nav-icon">📊</span>
+            <span>Mood Journal</span>
+        </a>
+        <a th:href="@{/student/assessment}" class="nav-item" data-page="assessment">
+            <span class="nav-icon">📋</span>
+            <span>Assessments</span>
+        </a>
+        <a th:href="@{/student/appointments}" class="nav-item" data-page="appointments">
+            <span class="nav-icon">📅</span>
+            <span>Appointments</span>
+        </a>
+        
+        <p class="sidebar-nav-title">Resources</p>
+        <a th:href="@{/student/modules}" class="nav-item" data-page="modules">
+            <span class="nav-icon">📚</span>
+            <span>Learning</span>
+            <span class="nav-badge">2</span>
+        </a>
+        <a th:href="@{/student/ai-coach}" class="nav-item" data-page="ai-coach">
+            <span class="nav-icon">🤖</span>
+            <span>AI Coach</span>
+        </a>
+        <a th:href="@{/student/care-plan}" class="nav-item" data-page="care-plan">
+            <span class="nav-icon">💊</span>
+            <span>Care Plan</span>
+        </a>
+        
+        <p class="sidebar-nav-title">Community</p>
+        <a th:href="@{/forum}" class="nav-item" data-page="forum">
+            <span class="nav-icon">💬</span>
+            <span>Forum</span>
+        </a>
+        <a th:href="@{/student/leaderboard}" class="nav-item" data-page="leaderboard">
+            <span class="nav-icon">🏆</span>
+            <span>Leaderboard</span>
+            <span class="nav-badge new">NEW</span>
+        </a>
+    </nav>
+    
+    <!-- Companion Pet Section -->
+    <div class="pet-section">
+        <div class="pet-avatar">🐱</div>
+        <div class="pet-name">Mochi</div>
+        <div class="pet-status">
+            <span class="pet-status-dot"></span>
+            <span th:if="${globalUserPoints != null and globalUserPoints.currentStreak > 0}">🔥 <span th:text="${globalUserPoints.currentStreak}">0</span> day streak!</span>
+            <span th:unless="${globalUserPoints != null and globalUserPoints.currentStreak > 0}">Feeling happy</span>
+        </div>
+        <div class="pet-level" th:if="${globalUserPoints != null}" 
+             th:text="'Level ' + ${globalUserPoints.currentLevel} + ' • ' + ${globalUserPoints.totalPoints} + ' / ' + ${globalUserPoints.xpToNextLevel} + ' XP'">Level 1 • 0 / 1000 XP</div>
+        <div class="pet-level" th:unless="${globalUserPoints != null}">Level 1 • 0 / 1000 XP</div>
+        <div class="pet-xp-bar">
+            <div class="pet-xp-fill" th:if="${globalUserPoints != null}" 
+                 th:style="'width: ' + ${(globalUserPoints.totalPoints * 100) / globalUserPoints.xpToNextLevel} + '%'"></div>
+            <div class="pet-xp-fill" th:unless="${globalUserPoints != null}" style="width: 0%"></div>
+        </div>
+    </div>
+    
+    <!-- Theme Toggle -->
+    <div style="padding: 12px; margin-bottom: 12px;">
+        <div class="d-flex align-center justify-between" style="margin-bottom: 8px;">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Theme</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+        </div>
+    </div>
+    
+    <!-- Profile Section -->
+    <div class="sidebar-profile" sec:authorize="isAuthenticated()">
+        <a th:href="@{/profile}" class="profile-avatar" title="Manage Profile" style="text-decoration: none; cursor: pointer;">
+            <span sec:authentication="principal.displayName" 
+                  th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'U'}">A</span>
+        </a>
+        <a th:href="@{/profile}" class="profile-info" style="text-decoration: none; cursor: pointer;">
+            <div class="profile-name" sec:authentication="principal.displayName">User Name</div>
+            <div class="profile-email" sec:authentication="principal.email">email@example.com</div>
+        </a>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="profile-settings" title="Logout">
+                <span>🚪</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- ============================================
+     SIDEBAR - COUNSELLOR
+     ============================================ -->
+<aside th:fragment="sidebar-counsellor" class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon" style="background: linear-gradient(135deg, #81b29a, #a8d5ba);">
+            <span>✨</span>
+        </div>
+        <div class="sidebar-brand-text">
+            Sol<span>ace</span>
+        </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <p class="sidebar-nav-title">Main</p>
+        <a th:href="@{/counsellor/dashboard}" class="nav-item" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+        </a>
+        <a th:href="@{/counsellor/appointments}" class="nav-item" data-page="appointments">
+            <span class="nav-icon">📅</span>
+            <span>Appointments</span>
+        </a>
+        <a th:href="@{/counsellor/referrals}" class="nav-item" data-page="referrals">
+            <span class="nav-icon">📋</span>
+            <span>Referrals</span>
+        </a>
+        
+        <p class="sidebar-nav-title">Moderation</p>
+        <a th:href="@{/moderation}" class="nav-item" data-page="moderation">
+            <span class="nav-icon">🛡️</span>
+            <span>Reports</span>
+        </a>
+        <a th:href="@{/forum}" class="nav-item" data-page="forum">
+            <span class="nav-icon">👥</span>
+            <span>Forum</span>
+        </a>
+    </nav>
+    
+    <div style="padding: 12px; margin-top: auto; margin-bottom: 12px;">
+        <div class="d-flex align-center justify-between">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Theme</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+        </div>
+    </div>
+    
+    <div class="sidebar-profile" sec:authorize="isAuthenticated()">
+        <a th:href="@{/profile}" class="profile-link" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; flex: 1;">
+            <div class="profile-avatar" style="background: linear-gradient(135deg, #81b29a, #a8d5ba);">
+                <span sec:authentication="principal.displayName" 
+                      th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'U'}">C</span>
+            </div>
+            <div class="profile-info">
+                <div class="profile-name" sec:authentication="principal.displayName">Counsellor</div>
+                <div class="profile-email" sec:authentication="principal.email">email@example.com</div>
+            </div>
+        </a>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="profile-settings" title="Logout">
+                <span>🚪</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- ============================================
+     SIDEBAR - FACULTY
+     ============================================ -->
+<aside th:fragment="sidebar-faculty" class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon" style="background: linear-gradient(135deg, #e07a5f, #f4a58a);">
+            <span>✨</span>
+        </div>
+        <div class="sidebar-brand-text">
+            Sol<span>ace</span>
+        </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <p class="sidebar-nav-title">Main</p>
+        <a th:href="@{/faculty/dashboard}" class="nav-item" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+        </a>
+        <a th:href="@{/faculty/referrals/new}" class="nav-item" data-page="referrals">
+            <span class="nav-icon">📝</span>
+            <span>Submit Referral</span>
+        </a>
+    </nav>
+    
+    <div style="padding: 12px; margin-top: auto; margin-bottom: 12px;">
+        <div class="d-flex align-center justify-between">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Theme</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+        </div>
+    </div>
+    
+    <div class="sidebar-profile" sec:authorize="isAuthenticated()">
+        <a th:href="@{/profile}" class="profile-link" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; flex: 1;">
+            <div class="profile-avatar" style="background: linear-gradient(135deg, #e07a5f, #f4a58a);">
+                <span sec:authentication="principal.displayName" 
+                      th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'U'}">F</span>
+            </div>
+            <div class="profile-info">
+                <div class="profile-name" sec:authentication="principal.displayName">Faculty</div>
+                <div class="profile-email" sec:authentication="principal.email">email@example.com</div>
+            </div>
+        </a>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="profile-settings" title="Logout">
+                <span>🚪</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- ============================================
+     SIDEBAR - ADMIN
+     ============================================ -->
+<aside th:fragment="sidebar-admin" class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon" style="background: linear-gradient(135deg, #fbbf24, #fcd34d);">
+            <span style="filter: none;">✨</span>
+        </div>
+        <div class="sidebar-brand-text">
+            Sol<span>ace</span>
+        </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <p class="sidebar-nav-title">Admin</p>
+        <a th:href="@{/admin/dashboard}" class="nav-item" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span>Dashboard</span>
+        </a>
+        <a th:href="@{/admin/content}" class="nav-item" data-page="content">
+            <span class="nav-icon">📚</span>
+            <span>Learning Modules</span>
+        </a>
+        <a th:href="@{/admin/assessments}" class="nav-item" data-page="assessments">
+            <span class="nav-icon">📋</span>
+            <span>Assessments</span>
+        </a>
+        
+        <p class="sidebar-nav-title">Settings</p>
+        <a th:href="@{/admin/forum-settings}" class="nav-item" data-page="forum-settings">
+            <span class="nav-icon">⚙️</span>
+            <span>Forum Settings</span>
+        </a>
+        <a th:href="@{/admin/integrations}" class="nav-item" data-page="integrations">
+            <span class="nav-icon">🔌</span>
+            <span>Integrations</span>
+        </a>
+        
+        <p class="sidebar-nav-title">Moderation</p>
+        <a th:href="@{/moderation}" class="nav-item" data-page="moderation">
+            <span class="nav-icon">🛡️</span>
+            <span>Reports</span>
+        </a>
+    </nav>
+    
+    <div style="padding: 12px; margin-top: auto; margin-bottom: 12px;">
+        <div class="d-flex align-center justify-between">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Theme</span>
+            <div class="theme-toggle" onclick="toggleTheme()"></div>
+        </div>
+    </div>
+    
+    <div class="sidebar-profile" sec:authorize="isAuthenticated()">
+        <a th:href="@{/profile}" class="profile-link" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; flex: 1;">
+            <div class="profile-avatar" style="background: linear-gradient(135deg, #fbbf24, #fcd34d); color: #1a1a1a;">
+                <span sec:authentication="principal.displayName" 
+                      th:text="${#authentication?.principal?.displayName != null ? #strings.substring(#authentication.principal.displayName, 0, 1) : 'U'}">A</span>
+            </div>
+            <div class="profile-info">
+                <div class="profile-name" sec:authentication="principal.displayName">Admin</div>
+                <div class="profile-email" sec:authentication="principal.email">email@example.com</div>
+            </div>
+        </a>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="profile-settings" title="Logout">
+                <span>🚪</span>
+            </button>
+        </form>
+    </div>
+</aside>
+
+<!-- ============================================
+     FOOTER
+     ============================================ -->
+<footer th:fragment="footer" style="text-align: center; padding: 32px 0; color: var(--text-muted); font-size: 0.85rem;">
+    <p style="margin-bottom: 4px;">© 2025 Solace Mental Health Hub</p>
+    <p style="margin: 0;">Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+</footer>
+
+<!-- ============================================
+     SCRIPTS
+     ============================================ -->
+<th:block th:fragment="scripts">
+<script th:inline="javascript">
+    // Theme Toggle
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('solace-theme', newTheme);
+        updateThemeIcons(newTheme);
+        console.log('Theme switched to:', newTheme);
+    }
+    
+    function updateThemeIcons(theme) {
+        // Update all theme icons (emoji-based)
+        document.querySelectorAll('.theme-icon').forEach(icon => {
+            icon.textContent = theme === 'dark' ? '🌙' : '☀️';
+        });
+    }
+    
+    // Initialize theme immediately to prevent flash
+    (function() {
+        const savedTheme = localStorage.getItem('solace-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+    
+    // Full initialization on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('solace-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcons(savedTheme);
+        
+        // Add active class to current nav item based on exact or closest match
+        const currentPath = window.location.pathname;
+        let bestMatch = null;
+        let bestMatchLength = 0;
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const href = item.getAttribute('href');
+            if (href && currentPath.startsWith(href) && href.length > bestMatchLength) {
+                bestMatch = item;
+                bestMatchLength = href.length;
+            }
+        });
+        
+        if (bestMatch) {
+            bestMatch.classList.add('active');
+        }
+        
+        // Mobile nav active state
+        let bestMobileMatch = null;
+        let bestMobileMatchLength = 0;
+        
+        document.querySelectorAll('.mobile-nav-item').forEach(item => {
+            const href = item.getAttribute('href');
+            if (href && currentPath.startsWith(href) && href.length > bestMobileMatchLength) {
+                bestMobileMatch = item;
+                bestMobileMatchLength = href.length;
+            }
+        });
+        
+        if (bestMobileMatch) {
+            document.querySelectorAll('.mobile-nav-item').forEach(i => i.classList.remove('active'));
+            bestMobileMatch.classList.add('active');
+        }
+    });
+    
+    // Pet XP Animation (for demo)
+    function animatePetXP(targetPercent) {
+        const xpFill = document.querySelector('.pet-xp-fill');
+        if (xpFill) {
+            xpFill.style.width = targetPercent + '%';
+        }
+    }
+    
+    // Mobile Menu Functions
+    function toggleMobileMenu() {
+        const overlay = document.getElementById('mobileMenuOverlay');
+        if (overlay) {
+            overlay.classList.toggle('active');
+            // Prevent body scroll when menu is open
+            document.body.style.overflow = overlay.classList.contains('active') ? 'hidden' : '';
+        }
+    }
+    
+    function closeMobileMenu(event) {
+        // If called from overlay click, only close if clicking on overlay itself
+        if (event && event.target.id !== 'mobileMenuOverlay') {
+            return;
+        }
+        const overlay = document.getElementById('mobileMenuOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+</script>
+</th:block>
+
+</html>

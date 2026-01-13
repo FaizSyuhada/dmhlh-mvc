@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Moderation - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: sidebar-counsellor}"></div>
+        <div sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>🛡️</span> Moderation Panel
+                </h1>
+                <p class="page-subtitle">Review and manage reported content</p>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Pending Moderation Section -->
+            <div th:if="${pendingModerationCount > 0}" class="card hover-lift" style="margin-bottom: 24px; border: 2px solid rgba(244, 162, 97, 0.3); background: var(--card-bg);">
+                <div class="card-header" style="background: rgba(244, 162, 97, 0.1);">
+                    <span class="card-title" style="color: #f4a261;">
+                        ⏳ Pending Moderation (<span th:text="${pendingModerationCount}">0</span>)
+                    </span>
+                    <span class="badge" style="background: rgba(244, 162, 97, 0.2); color: #f4a261;">Requires Review</span>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <!-- Info Banner -->
+                    <div style="padding: 16px 20px; background: rgba(244, 162, 97, 0.05); border-bottom: 1px solid var(--border);">
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">
+                            <strong>ℹ️ Content Moderation:</strong> These posts contain potentially harmful language and need manual review before being visible to users.
+                        </p>
+                    </div>
+                    
+                    <!-- Pending Threads -->
+                    <div th:each="thread : ${pendingThreads}" style="padding: 20px; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 8px;">
+                                    <span style="background: rgba(124, 111, 174, 0.15); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">THREAD</span>
+                                    <span style="background: rgba(244, 162, 97, 0.15); color: #f4a261; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; margin-left: 8px;">⚠️ FLAGGED</span>
+                                </div>
+                                <h4 style="margin: 8px 0; font-weight: 600;" th:text="${thread.title}">Thread Title</h4>
+                                <p style="color: var(--text-secondary); margin-bottom: 8px; line-height: 1.6;" th:text="${#strings.abbreviate(thread.content, 300)}">Content preview...</p>
+                                <small style="color: var(--text-muted);">
+                                    By <span th:text="${thread.anonymousAlias}">Anonymous</span> •
+                                    <span th:text="${#temporals.format(thread.createdAt, 'MMM dd, HH:mm')}">Date</span>
+                                </small>
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                <form th:action="@{/moderation/thread/{id}/approve(id=${thread.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Approve and make visible">✅ Approve</button>
+                                </form>
+                                <form th:action="@{/moderation/thread/{id}/reject(id=${thread.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Reject and remove">❌ Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pending Posts (Replies) -->
+                    <div th:each="post : ${pendingPosts}" style="padding: 20px; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 8px;">
+                                    <span style="background: rgba(129, 178, 154, 0.15); color: var(--accent-2); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">REPLY</span>
+                                    <span style="background: rgba(244, 162, 97, 0.15); color: #f4a261; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; margin-left: 8px;">⚠️ FLAGGED</span>
+                                </div>
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">
+                                    In thread: "<span th:text="${#strings.abbreviate(post.thread.title, 50)}">Thread Title</span>"
+                                </p>
+                                <p style="color: var(--text-secondary); margin-bottom: 8px; line-height: 1.6;" th:text="${#strings.abbreviate(post.content, 300)}">Content preview...</p>
+                                <small style="color: var(--text-muted);">
+                                    By <span th:text="${post.anonymousAlias}">Anonymous</span> •
+                                    <span th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">Date</span>
+                                </small>
+                            </div>
+                            <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                <form th:action="@{/moderation/post/{id}/approve(id=${post.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success" title="Approve and make visible">✅ Approve</button>
+                                </form>
+                                <form th:action="@{/moderation/post/{id}/reject(id=${post.id})}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Reject and remove">❌ Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- No Reports or Pending -->
+            <div th:if="${#lists.isEmpty(reports) and pendingModerationCount == 0}" class="empty-state" style="padding: 60px 20px;">
+                <div class="empty-state-icon" style="font-size: 4rem;">✅</div>
+                <div class="empty-state-title">All Clear!</div>
+                <div class="empty-state-description">No pending reports or moderation items. The community is doing great!</div>
+            </div>
+            
+            <!-- Reports List -->
+            <div th:unless="${#lists.isEmpty(reports)}" class="card hover-lift">
+                <div class="card-header">
+                    <span class="card-title">🚩 Pending Reports (<span th:text="${#lists.size(reports)}">0</span>)</span>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div th:each="report : ${reports}" style="padding: 20px; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 12px;">
+                                    <span class="reason-badge" th:text="${report.reason}" style="background: rgba(224, 122, 95, 0.15); color: var(--accent-3); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-right: 8px;">Reason</span>
+                                    <span class="status-badge" th:text="${report.status}" style="background: rgba(124, 111, 174, 0.15); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem;">Status</span>
+                                </div>
+                                <p th:if="${report.post != null}" style="margin-bottom: 8px;">
+                                    <strong>Reported Post:</strong> "<span th:text="${#strings.abbreviate(report.post.content, 100)}">Content</span>"
+                                </p>
+                                <p th:if="${report.thread != null and report.post == null}" style="margin-bottom: 8px;">
+                                    <strong>Reported Thread:</strong> "<span th:text="${report.thread.title}">Title</span>"
+                                </p>
+                                <p th:if="${report.details}" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px;">
+                                    <strong>Details:</strong> <span th:text="${report.details}">Details</span>
+                                </p>
+                                <small style="color: var(--text-muted);">
+                                    Reported <span th:text="${#temporals.format(report.createdAt, 'MMM dd, HH:mm')}">Date</span>
+                                </small>
+                            </div>
+                            <a th:href="@{/moderation/report/{id}(id=${report.id})}" class="btn btn-sm btn-primary">
+                                Review
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation - Role-specific -->
+    <nav sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: mobile-nav-counsellor}"></nav>
+    <div sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: mobile-menu-counsellor}"></div>
+    <nav sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

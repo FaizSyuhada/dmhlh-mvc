@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Quiz Result - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>🏆</span> Quiz Result
+                </h1>
+                <p class="page-subtitle" th:text="${module.title}">Module Title</p>
+            </div>
+            
+            <!-- Result Card -->
+            <div class="card hover-lift" style="max-width: 600px; margin: 0 auto;">
+                <div class="card-body" style="text-align: center; padding: 48px 32px;">
+                    <!-- Score Display -->
+                    <div style="font-size: 5rem; font-weight: 700; margin-bottom: 16px;"
+                         th:style="${attempt.scorePercentage >= 70} ? 'background: linear-gradient(135deg, var(--accent-2), #a8d5ba); -webkit-background-clip: text; -webkit-text-fill-color: transparent;' : 'background: linear-gradient(135deg, var(--accent-3), #f4a58a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'">
+                        <span th:text="${#numbers.formatDecimal(attempt.scorePercentage, 1, 0)}">80</span>%
+                    </div>
+                    
+                    <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 24px;">
+                        You got <strong th:text="${attempt.correctAnswers}">4</strong> out of 
+                        <strong th:text="${attempt.totalQuestions}">5</strong> questions correct.
+                    </p>
+                    
+                    <!-- Success/Info Message -->
+                    <div th:if="${attempt.scorePercentage >= 70}" 
+                         style="background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <span style="color: var(--accent-2);">🎉 Great job! You've demonstrated a good understanding of this topic.</span>
+                    </div>
+                    <div th:unless="${attempt.scorePercentage >= 70}" 
+                         style="background: rgba(124, 111, 174, 0.1); border: 1px solid rgba(124, 111, 174, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <span style="color: var(--accent);">💡 Consider reviewing the module and trying again to improve your score.</span>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+                        <a th:href="@{/student/modules/{id}(id=${module.id})}" class="btn btn-outline">
+                            <i class="bi bi-book"></i> Back to Module
+                        </a>
+                        <a th:href="@{/student/modules}" class="btn btn-primary">
+                            <i class="bi bi-grid"></i> All Modules
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

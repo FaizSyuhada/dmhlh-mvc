@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${thread.title} + ' - Solace Forum')}"></head>
+<body>
+    <style>
+        .user-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #7c5dfa, #9f7aea);
+            color: #ffffff !important;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .thread-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        [data-theme="dark"] .thread-card {
+            background: #2a2a3e;
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        .reply-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        [data-theme="dark"] .reply-card {
+            background: #2a2a3e;
+            border-color: rgba(255,255,255,0.1);
+        }
+    </style>
+    
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar - Student for students, Counsellor for counsellors -->
+        <div sec:authorize="hasRole('STUDENT')" th:replace="~{fragments/layout :: sidebar-student}"></div>
+        <div sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: sidebar-counsellor}"></div>
+        <div sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/forum}">Forum</a></li>
+                    <li class="breadcrumb-item active" th:text="${#strings.abbreviate(thread.title, 30)}">Thread</li>
+                </ol>
+            </nav>
+            
+            <!-- Error Message -->
+            <div th:if="${error}" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(224, 122, 95, 0.15); border: 1px solid rgba(224, 122, 95, 0.3); color: var(--accent-3);">
+                <span th:text="${error}">Error</span>
+            </div>
+            
+            <!-- Original Post -->
+            <div class="card hover-lift thread-card" style="margin-bottom: 24px;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="user-badge" th:text="${thread.anonymousAlias}">Alias</span>
+                        <small style="color: var(--text-muted);" th:text="${#temporals.format(thread.createdAt, 'MMM dd, yyyy HH:mm')}">Date</small>
+                    </div>
+                    <div sec:authorize="isAuthenticated()">
+                        <button class="btn btn-sm btn-ghost" onclick="document.getElementById('reportThreadModal').showModal()" title="Report">
+                            🚩
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h4 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 16px;" th:text="${thread.title}">Title</h4>
+                    <p style="line-height: 1.7; white-space: pre-wrap;" th:text="${thread.content}">Content</p>
+                </div>
+                <div class="card-footer" style="display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-top: 1px solid var(--border);">
+                    <!-- Like Button -->
+                    <button type="button" class="btn btn-sm btn-ghost like-btn" 
+                            th:data-thread-id="${thread.id}"
+                            onclick="toggleLike(this)"
+                            style="display: flex; align-items: center; gap: 6px;">
+                        <span class="like-icon">❤️</span>
+                        <span class="like-count" th:text="${thread.likeCount}">0</span>
+                    </button>
+                    
+                    <!-- Bookmark Button -->
+                    <button type="button" class="btn btn-sm btn-ghost bookmark-btn"
+                            th:data-thread-id="${thread.id}"
+                            onclick="toggleBookmark(this)"
+                            style="display: flex; align-items: center; gap: 6px;">
+                        <span class="bookmark-icon">🔖</span>
+                        <span>Save</span>
+                    </button>
+                    
+                    <!-- View Count -->
+                    <span style="color: var(--text-muted); font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                        👁️ <span th:text="${thread.viewCount}">0</span> views
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Replies -->
+            <h5 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px;">
+                💬 Replies (<span th:text="${#lists.size(posts)}">0</span>)
+            </h5>
+            
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(posts)}" class="card" style="padding: 40px; text-align: center; background: var(--surface-2);">
+                <div style="font-size: 3rem; margin-bottom: 12px;">💬</div>
+                <div style="font-weight: 600; margin-bottom: 8px; color: var(--text);">No replies yet</div>
+                <div style="color: var(--text-muted);">Be the first to share your thoughts!</div>
+            </div>
+            
+            <!-- Replies List -->
+            <div th:unless="${#lists.isEmpty(posts)}">
+                <div th:each="post : ${posts}" class="card hover-lift reply-card" style="margin-bottom: 16px;">
+                    <div class="card-body" style="padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="user-badge" th:text="${post.anonymousAlias}">Alias</span>
+                                <small style="color: var(--text-muted);" th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">Date</small>
+                            </div>
+                            <div sec:authorize="isAuthenticated()">
+                                <form th:action="@{/forum/report/post/{id}(id=${post.id})}" method="post" style="display: inline;">
+                                    <input type="hidden" name="reason" value="INAPPROPRIATE">
+                                    <button type="submit" class="btn btn-sm btn-ghost" title="Report">🚩</button>
+                                </form>
+                            </div>
+                        </div>
+                        <p style="line-height: 1.7; white-space: pre-wrap; margin: 0;" th:text="${post.content}">Content</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reply Form -->
+            <div th:if="${!thread.locked}" sec:authorize="hasRole('STUDENT')" class="card hover-lift" style="margin-top: 24px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-reply"></i> Add Reply</span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/forum/thread/{id}/reply(id=${thread.id})}" method="post">
+                        <div style="margin-bottom: 16px;">
+                            <textarea class="form-control" name="content" rows="3" placeholder="Share your thoughts..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Post Reply
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div th:if="${thread.locked}" style="background: var(--surface-2); border-radius: 12px; padding: 16px; margin-top: 24px;">
+                🔒 This thread is locked. New replies are not allowed.
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Report Thread Modal (Native HTML Dialog) -->
+    <dialog id="reportThreadModal" style="border: none; border-radius: 16px; padding: 0; background: var(--surface); box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; width: 90%;">
+        <form th:action="@{/forum/report/thread/{id}(id=${thread.id})}" method="post" style="padding: 24px;">
+            <h5 style="margin-bottom: 20px; font-weight: 600;">Report Thread</h5>
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">Reason</label>
+                <select class="form-select" name="reason" required>
+                    <option th:each="r : ${reportReasons}" th:value="${r}" th:text="${r}">Reason</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="form-label">Details (optional)</label>
+                <textarea class="form-control" name="details" rows="3"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('reportThreadModal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="background: var(--accent-3);">Submit Report</button>
+            </div>
+        </form>
+    </dialog>
+    
+    <!-- Mobile Nav -->
+    <nav sec:authorize="hasRole('STUDENT')" th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div sec:authorize="hasRole('STUDENT')" th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    async function toggleLike(button) {
+        const threadId = button.dataset.threadId;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        
+        try {
+            const response = await fetch(`/forum/thread/${threadId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const icon = button.querySelector('.like-icon');
+                const count = button.querySelector('.like-count');
+                
+                if (data.liked) {
+                    icon.textContent = '❤️';
+                    button.classList.add('liked');
+                } else {
+                    icon.textContent = '🤍';
+                    button.classList.remove('liked');
+                }
+                count.textContent = data.likeCount;
+            }
+        } catch (error) {
+            console.error('Error toggling like:', error);
+        }
+    }
+    
+    async function toggleBookmark(button) {
+        const threadId = button.dataset.threadId;
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        
+        try {
+            const response = await fetch(`/forum/thread/${threadId}/bookmark`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const icon = button.querySelector('.bookmark-icon');
+                
+                if (data.bookmarked) {
+                    icon.textContent = '📌';
+                    button.classList.add('bookmarked');
+                } else {
+                    icon.textContent = '🔖';
+                    button.classList.remove('bookmarked');
+                }
+            }
+        } catch (error) {
+            console.error('Error toggling bookmark:', error);
+        }
+    }
+    /*]]>*/
+    </script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Self-Assessment - Solace')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Progress Bar -->
+            <div class="assessment-progress-container">
+                <div class="assessment-progress-bar">
+                    <div class="assessment-progress-fill" id="progressFill"></div>
+                </div>
+                <span class="assessment-progress-text" id="progressText">Question 1 of <span th:text="${#lists.size(questions)}">9</span></span>
+            </div>
+            
+            <!-- Assessment Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span th:text="${assessment.code == 'PHQ9'} ? '🧠' : '😰'">📋</span>
+                    <span th:text="${assessment.name}">Self-Assessment</span>
+                </h1>
+                <p class="page-subtitle" th:text="${assessment.instructions}">Instructions here</p>
+            </div>
+            
+            <!-- Cancel Button -->
+            <div style="margin-bottom: 16px;">
+                <button type="button" class="btn btn-ghost" onclick="confirmCancel()">
+                    <span>✕</span> Cancel Assessment
+                </button>
+            </div>
+            
+            <!-- Assessment Form -->
+            <form th:action="@{/student/assessment/{code}/submit(code=${assessment.code})}" 
+                  method="post" 
+                  id="assessmentForm"
+                  onsubmit="return validateForm()">
+                <input type="hidden" name="definitionId" th:value="${assessment.id}">
+                
+                <!-- Question Cards (one per question, shown one at a time) -->
+                <div th:each="question, iter : ${questions}" 
+                     class="assessment-question-card card fade-in" 
+                     th:id="'question-' + ${iter.index}"
+                     th:style="${iter.index == 0} ? '' : 'display: none;'">
+                    
+                    <!-- Question Number Badge -->
+                    <div class="question-badge">
+                        <span th:text="${iter.index + 1}">1</span>
+                    </div>
+                    
+                    <!-- Question Text -->
+                    <h2 class="question-text" th:text="${question.question}">
+                        Question text here
+                    </h2>
+                    
+                    <!-- Answer Options -->
+                    <div class="answer-options">
+                        <label class="answer-option" th:for="'q_' + ${question.id} + '_0'">
+                            <input type="radio" 
+                                   th:name="'q_' + ${question.id}" 
+                                   th:id="'q_' + ${question.id} + '_0'"
+                                   value="0" 
+                                   required
+                                   th:onclick="'selectAnswer(' + ${iter.index} + ', 0)'">
+                            <div class="answer-box">
+                                <span class="answer-score">0</span>
+                                <span class="answer-label" th:text="${question.option0Text}">Not at all</span>
+                            </div>
+                        </label>
+                        
+                        <label class="answer-option" th:for="'q_' + ${question.id} + '_1'">
+                            <input type="radio" 
+                                   th:name="'q_' + ${question.id}" 
+                                   th:id="'q_' + ${question.id} + '_1'"
+                                   value="1"
+                                   th:onclick="'selectAnswer(' + ${iter.index} + ', 1)'">
+                            <div class="answer-box">
+                                <span class="answer-score">1</span>
+                                <span class="answer-label" th:text="${question.option1Text}">Several days</span>
+                            </div>
+                        </label>
+                        
+                        <label class="answer-option" th:for="'q_' + ${question.id} + '_2'">
+                            <input type="radio" 
+                                   th:name="'q_' + ${question.id}" 
+                                   th:id="'q_' + ${question.id} + '_2'"
+                                   value="2"
+                                   th:onclick="'selectAnswer(' + ${iter.index} + ', 2)'">
+                            <div class="answer-box">
+                                <span class="answer-score">2</span>
+                                <span class="answer-label" th:text="${question.option2Text}">More than half the days</span>
+                            </div>
+                        </label>
+                        
+                        <label class="answer-option" th:for="'q_' + ${question.id} + '_3'">
+                            <input type="radio" 
+                                   th:name="'q_' + ${question.id}" 
+                                   th:id="'q_' + ${question.id} + '_3'"
+                                   value="3"
+                                   th:onclick="'selectAnswer(' + ${iter.index} + ', 3)'">
+                            <div class="answer-box">
+                                <span class="answer-score">3</span>
+                                <span class="answer-label" th:text="${question.option3Text}">Nearly every day</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Navigation Buttons -->
+                <div class="assessment-nav">
+                    <button type="button" class="btn btn-outline" id="prevBtn" onclick="prevQuestion()" style="display: none;">
+                        <span>←</span> Previous
+                    </button>
+                    <div style="flex: 1;"></div>
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">
+                        Next <span>→</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="display: none;">
+                        <span>✓</span> Submit Assessment
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Validation Error Message -->
+            <div class="validation-error" id="validationError" style="display: none;">
+                <span>⚠️</span>
+                <span id="errorMessage">Please select an answer before continuing.</span>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Cancel Confirmation Modal -->
+    <div class="modal-overlay" id="cancelModal" style="display: none;" onclick="closeCancelModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-icon">⚠️</div>
+            <h3>Cancel Assessment?</h3>
+            <p>Your progress will not be saved. Are you sure you want to cancel?</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeCancelModal()">Continue Assessment</button>
+                <a th:href="@{/student/assessment}" class="btn btn-danger">Yes, Cancel</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        /* Assessment Progress */
+        .assessment-progress-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .assessment-progress-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--surface-2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .assessment-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .assessment-progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        /* Question Card */
+        .assessment-question-card {
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .question-badge {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 24px;
+        }
+        
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 32px 0;
+            line-height: 1.4;
+        }
+        
+        /* Answer Options */
+        .answer-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+            .answer-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .assessment-question-card {
+                padding: 24px 16px;
+                min-height: 350px;
+            }
+            
+            .question-text {
+                font-size: 1.1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .answer-options {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .answer-option {
+            cursor: pointer;
+        }
+        
+        .answer-option input {
+            display: none;
+        }
+        
+        .answer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 20px 16px;
+            background: var(--surface-2);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .answer-box:hover {
+            background: var(--bg-warm);
+            transform: translateY(-2px);
+            border-color: var(--accent-light);
+        }
+        
+        .answer-option input:checked + .answer-box {
+            background: linear-gradient(135deg, rgba(124, 111, 174, 0.15), rgba(165, 153, 212, 0.08));
+            border-color: var(--accent);
+            box-shadow: 0 4px 16px rgba(124, 111, 174, 0.2);
+        }
+        
+        .answer-score {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .answer-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        /* Navigation */
+        .assessment-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        /* Validation Error */
+        .validation-error {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(224, 122, 95, 0.1);
+            border: 1px solid rgba(224, 122, 95, 0.3);
+            border-radius: 12px;
+            color: var(--accent-3);
+            margin-top: 16px;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        
+        .modal-content h3 {
+            margin: 0 0 12px 0;
+            color: var(--text);
+        }
+        
+        .modal-content p {
+            color: var(--text-secondary);
+            margin: 0 0 24px 0;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+    </style>
+    
+    <script th:inline="javascript">
+        const totalQuestions = /*[[${#lists.size(questions)}]]*/ 9;
+        let currentQuestion = 0;
+        let answers = {};
+        
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = 
+                'Question ' + (currentQuestion + 1) + ' of ' + totalQuestions;
+        }
+        
+        function showQuestion(index) {
+            // Hide all questions
+            document.querySelectorAll('.assessment-question-card').forEach((card, i) => {
+                card.style.display = i === index ? 'flex' : 'none';
+            });
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').style.display = index > 0 ? 'inline-flex' : 'none';
+            document.getElementById('nextBtn').style.display = index < totalQuestions - 1 ? 'inline-flex' : 'none';
+            document.getElementById('submitBtn').style.display = index === totalQuestions - 1 ? 'inline-flex' : 'none';
+            
+            // Hide validation error
+            document.getElementById('validationError').style.display = 'none';
+            
+            updateProgress();
+        }
+        
+        function selectAnswer(questionIndex, value) {
+            answers[questionIndex] = value;
+            // Hide validation error when an answer is selected
+            document.getElementById('validationError').style.display = 'none';
+        }
+        
+        function isCurrentQuestionAnswered() {
+            const questionCard = document.getElementById('question-' + currentQuestion);
+            const selectedInput = questionCard.querySelector('input[type="radio"]:checked');
+            return selectedInput !== null;
+        }
+        
+        function nextQuestion() {
+            if (!isCurrentQuestionAnswered()) {
+                document.getElementById('errorMessage').textContent = 'Please select an answer before continuing.';
+                document.getElementById('validationError').style.display = 'flex';
+                return;
+            }
+            
+            if (currentQuestion < totalQuestions - 1) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            }
+        }
+        
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+        
+        function validateForm() {
+            // Check all questions are answered
+            const allQuestionCards = document.querySelectorAll('.assessment-question-card');
+            for (let i = 0; i < allQuestionCards.length; i++) {
+                const selectedInput = allQuestionCards[i].querySelector('input[type="radio"]:checked');
+                if (!selectedInput) {
+                    currentQuestion = i;
+                    showQuestion(i);
+                    document.getElementById('errorMessage').textContent = 
+                        'Please answer question ' + (i + 1) + ' before submitting.';
+                    document.getElementById('validationError').style.display = 'flex';
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        function confirmCancel() {
+            document.getElementById('cancelModal').style.display = 'flex';
+        }
+        
+        function closeCancelModal() {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+        
+        // Handle escape key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCancelModal();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            showQuestion(0);
+        });
+    </script>
+</body>
+</html>

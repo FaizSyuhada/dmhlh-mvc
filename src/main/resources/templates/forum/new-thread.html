@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('New Thread - Solace Forum')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/forum}">Forum</a></li>
+                    <li class="breadcrumb-item active">New Thread</li>
+                </ol>
+            </nav>
+            
+            <!-- Error Message -->
+            <div th:if="${error}" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(224, 122, 95, 0.15); border: 1px solid rgba(224, 122, 95, 0.3); color: var(--accent-3);">
+                <i class="bi bi-exclamation-circle" style="margin-right: 8px;"></i>
+                <span th:text="${error}">Error</span>
+            </div>
+            
+            <!-- Form Card -->
+            <div class="card hover-lift" style="max-width: 800px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-plus-circle"></i> Start New Thread</span>
+                </div>
+                <div class="card-body" style="padding: 32px;">
+                    <!-- Anonymous Info -->
+                    <div style="background: rgba(124, 111, 174, 0.1); border: 1px solid rgba(124, 111, 174, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                        <span style="color: var(--accent);">🛡️ Your post will be anonymous. You'll be assigned a random alias that only you can see.</span>
+                    </div>
+                    
+                    <form th:action="@{/forum/create}" method="post">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label">Title *</label>
+                            <input type="text" class="form-control" name="title" th:maxlength="${settings.maxTitleLength}" required>
+                            <small style="color: var(--text-muted);">Max <span th:text="${settings.maxTitleLength}">200</span> characters</small>
+                        </div>
+                        
+                        <div class="form-group" style="margin-bottom: 24px;">
+                            <label class="form-label">Content *</label>
+                            <textarea class="form-control" name="content" rows="6" th:maxlength="${settings.maxPostLength}" required></textarea>
+                            <small style="color: var(--text-muted);">Max <span th:text="${settings.maxPostLength}">5000</span> characters</small>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--border);">
+                            <a th:href="@{/forum}" class="btn btn-outline">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Post Thread
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

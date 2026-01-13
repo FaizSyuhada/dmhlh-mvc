@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Edit Module - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>✏️</span> Edit Module
+                </h1>
+                <p class="page-subtitle" th:text="${module.title}">Module Title</p>
+            </div>
+            
+            <!-- Form Card -->
+            <div class="card hover-lift">
+                <div class="card-body" style="padding: 32px;">
+                    <form th:action="@{/admin/content/{id}/update(id=${module.id})}" method="post">
+                        <div class="grid grid-cols-2 gap-4" style="margin-bottom: 20px;">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Title *</label>
+                                <input type="text" class="form-control" name="title" th:value="${module.title}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Display Order</label>
+                                <input type="number" class="form-control" name="displayOrder" th:value="${module.displayOrder}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Type *</label>
+                                <select class="form-select" name="type" required>
+                                    <option th:each="t : ${types}" th:value="${t}" th:text="${t}" th:selected="${t == module.type}">Type</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" name="description" rows="2" th:text="${module.description}"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Status *</label>
+                                <select class="form-select" name="status" required>
+                                    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == module.status}">Status</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Video URL</label>
+                                <input type="url" class="form-control" name="videoUrl" th:value="${module.videoUrl}">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Body Content (HTML)</label>
+                                <textarea class="form-control" name="bodyContent" rows="10" style="font-family: monospace;" th:text="${module.bodyContent}"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--border);">
+                            <a th:href="@{/admin/content}" class="btn btn-outline">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Update Module
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

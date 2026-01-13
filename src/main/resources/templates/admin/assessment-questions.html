@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Assessment Questions - Admin')}"></head>
+<body>
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <div>
+                    <nav class="breadcrumb">
+                        <a th:href="@{/admin/assessments}">Assessments</a>
+                        <span>/</span>
+                        <span th:text="${assessment.code}">PHQ9</span>
+                    </nav>
+                    <h1 class="page-title">
+                        <span>❓</span> <span th:text="${assessment.name}">Assessment</span> Questions
+                    </h1>
+                    <p class="page-subtitle" th:text="${assessment.description}">Manage questions for this assessment</p>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success fade-in" style="margin-bottom: 24px;">
+                <span>✅</span>
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Add Question Form -->
+            <div class="card hover-lift fade-in" style="animation-delay: 0.1s; margin-bottom: 24px;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="bi bi-plus-circle"></i>
+                        Add New Question
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/assessments/{id}/questions/add(id=${assessment.id})}" method="post">
+                        <div class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">Question Text *</label>
+                            <textarea name="question" class="form-control" rows="2" required
+                                      placeholder="e.g., Over the last 2 weeks, how often have you felt down, depressed, or hopeless?"></textarea>
+                        </div>
+                        
+                        <div class="form-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
+                            <div class="form-group">
+                                <label class="form-label">Option 0 (Score: 0)</label>
+                                <input type="text" name="option0" class="form-control" 
+                                       placeholder="Not at all" value="Not at all">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option 1 (Score: 1)</label>
+                                <input type="text" name="option1" class="form-control" 
+                                       placeholder="Several days" value="Several days">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option 2 (Score: 2)</label>
+                                <input type="text" name="option2" class="form-control" 
+                                       placeholder="More than half" value="More than half the days">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Option 3 (Score: 3)</label>
+                                <input type="text" name="option3" class="form-control" 
+                                       placeholder="Nearly every day" value="Nearly every day">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row" style="display: flex; align-items: flex-end; gap: 16px;">
+                            <div class="form-group" style="width: 120px;">
+                                <label class="form-label">Order</label>
+                                <input type="number" name="displayOrder" class="form-control" 
+                                       th:value="${#lists.size(questions) + 1}" min="1">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus"></i> Add Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Questions List -->
+            <div class="card hover-lift fade-in" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="bi bi-list-ol"></i>
+                        Questions (<span th:text="${#lists.size(questions)}">0</span>)
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(questions)}" class="empty-state">
+                        <div class="empty-state-icon">❓</div>
+                        <div class="empty-state-title">No questions yet</div>
+                        <div class="empty-state-description">Add questions using the form above</div>
+                    </div>
+                    
+                    <div class="questions-list" th:unless="${#lists.isEmpty(questions)}">
+                        <div th:each="q, iter : ${questions}" class="question-item">
+                            <div class="question-number" th:text="${q.displayOrder}">1</div>
+                            <div class="question-content">
+                                <div class="question-text" th:text="${q.question}">Question text</div>
+                                <div class="question-options">
+                                    <span class="option">0: <span th:text="${q.option0Text}">Not at all</span></span>
+                                    <span class="option">1: <span th:text="${q.option1Text}">Several days</span></span>
+                                    <span class="option">2: <span th:text="${q.option2Text}">More than half</span></span>
+                                    <span class="option">3: <span th:text="${q.option3Text}">Nearly every day</span></span>
+                                </div>
+                            </div>
+                            <div class="question-actions">
+                                <form th:action="@{/admin/assessments/questions/{qId}/delete(qId=${q.id})}" 
+                                      method="post" style="display: inline;">
+                                    <input type="hidden" name="assessmentId" th:value="${assessment.id}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Delete this question?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="back-link" style="margin-top: 24px;">
+                <a th:href="@{/admin/assessments}" class="btn btn-outline">
+                    ← Back to Assessments
+                </a>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        .breadcrumb span {
+            color: var(--text-muted);
+        }
+        
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .question-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: var(--hover-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .question-number {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .question-content {
+            flex: 1;
+        }
+        
+        .question-text {
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        .question-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .option {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            background: var(--card-bg);
+            border-radius: 6px;
+        }
+        
+        .question-actions {
+            flex-shrink: 0;
+        }
+        
+        .alert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .question-options {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

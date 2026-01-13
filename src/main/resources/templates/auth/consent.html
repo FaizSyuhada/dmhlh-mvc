@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Consent')}"></head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px;">
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <div class="consent-container fade-in" style="width: 100%; max-width: 600px; position: relative; z-index: 1;">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 32px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent-2), #a8d5ba); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 12px 32px rgba(129, 178, 154, 0.3);">
+                <i class="bi bi-shield-check" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h1 style="font-size: 1.75rem; font-weight: 700; color: var(--text); margin-bottom: 8px;">
+                Privacy & Consent
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0;">
+                Before continuing, please review our data practices
+            </p>
+        </div>
+        
+        <!-- Consent Card -->
+        <div class="card" style="padding: 32px;">
+            <!-- Info Banner -->
+            <div class="nudge-card nudge-info" style="margin-bottom: 24px;">
+                <span class="nudge-icon">🔒</span>
+                <div class="nudge-content">
+                    <span class="nudge-message">Your privacy is important to us. We only collect data necessary to provide mental health support.</span>
+                </div>
+            </div>
+            
+            <!-- Consent Content -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 16px;">What we collect and why:</h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15), rgba(var(--accent-rgb), 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="bi bi-clipboard2-check" style="color: var(--accent); font-size: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <p style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Self-Assessment Data</p>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Your PHQ-9/GAD-7 responses to track your mental health over time.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.15), rgba(var(--accent-2-rgb), 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="bi bi-emoji-smile" style="color: var(--accent-2); font-size: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <p style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Mood Logs</p>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Daily mood entries to identify patterns and triggers.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(var(--accent-3-rgb), 0.15), rgba(var(--accent-3-rgb), 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="bi bi-chat-heart" style="color: var(--accent-3); font-size: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <p style="font-weight: 600; color: var(--text); margin-bottom: 4px;">AI Coach Conversations</p>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Chat logs to provide personalized support and recommendations.</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div style="width: 44px; height: 44px; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="bi bi-calendar-check" style="color: #b45309; font-size: 1.25rem;"></i>
+                        </div>
+                        <div>
+                            <p style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Appointment Records</p>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Counselling session history for continuity of care.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Important Notes -->
+            <div style="background: var(--surface-2); border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+                <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 12px;">
+                    <i class="bi bi-shield-lock" style="color: var(--accent); margin-right: 8px;"></i>
+                    Your Rights
+                </h4>
+                <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.8;">
+                    <li>Your data is encrypted and stored securely</li>
+                    <li>Only authorized counsellors can view your records</li>
+                    <li>You can request data deletion at any time</li>
+                    <li>You can withdraw consent and continue with limited access</li>
+                </ul>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 12px;">
+                <form th:action="@{/consent/decline}" method="post" style="flex: 1;">
+                    <button type="submit" class="btn btn-secondary" style="width: 100%;">
+                        <i class="bi bi-x"></i>
+                        <span>Decline</span>
+                    </button>
+                </form>
+                <form th:action="@{/consent/accept}" method="post" style="flex: 2;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="bi bi-check-lg"></i>
+                        <span>I Accept & Continue</span>
+                    </button>
+                </form>
+            </div>
+            
+            <p style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 16px; margin-bottom: 0;">
+                By accepting, you agree to our Privacy Policy and Terms of Service.
+            </p>
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

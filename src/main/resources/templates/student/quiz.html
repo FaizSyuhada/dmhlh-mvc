@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Quiz - ' + ${module.title} + ' - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>📝</span> Quiz: <span th:text="${module.title}">Module</span>
+                </h1>
+                <p class="page-subtitle">Test your understanding of the material</p>
+            </div>
+            
+            <!-- Quiz Card -->
+            <div class="card hover-lift">
+                <div class="card-body">
+                    <form th:action="@{/student/quiz/{id}/submit(id=${module.id})}" method="post">
+                        <div th:each="question, iter : ${questions}" class="quiz-question" style="margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border);">
+                            <h5 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px;">
+                                <span class="question-number" style="background: linear-gradient(135deg, var(--accent), var(--accent-light)); color: white; width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;" th:text="${iter.count}">1</span>
+                                <span th:text="${question.question}">Question text</span>
+                            </h5>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 40px;">
+                                <label class="quiz-option" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
+                                    <input type="radio" 
+                                           th:name="'q_' + ${question.id}" 
+                                           value="A" required
+                                           style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                    <span><strong>A.</strong> <span th:text="${question.optionA}">Option A</span></span>
+                                </label>
+                                <label class="quiz-option" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
+                                    <input type="radio" 
+                                           th:name="'q_' + ${question.id}" 
+                                           value="B"
+                                           style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                    <span><strong>B.</strong> <span th:text="${question.optionB}">Option B</span></span>
+                                </label>
+                                <label class="quiz-option" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
+                                    <input type="radio" 
+                                           th:name="'q_' + ${question.id}" 
+                                           value="C"
+                                           style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                    <span><strong>C.</strong> <span th:text="${question.optionC}">Option C</span></span>
+                                </label>
+                                <label class="quiz-option" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;">
+                                    <input type="radio" 
+                                           th:name="'q_' + ${question.id}" 
+                                           value="D"
+                                           style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                    <span><strong>D.</strong> <span th:text="${question.optionD}">Option D</span></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px;">
+                            <a th:href="@{/student/modules/{id}(id=${module.id})}" class="btn btn-outline">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Submit Quiz
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

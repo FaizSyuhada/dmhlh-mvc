@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Appointments - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>📅</span> Book Appointment
+                </h1>
+                <p class="page-subtitle">Schedule a counselling session with our experts</p>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success fade-in" style="margin-bottom: 24px;">
+                <span class="alert-icon">✅</span>
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Main Booking Interface -->
+            <div class="booking-container fade-in" style="display: grid; grid-template-columns: 280px 1fr 320px; gap: 24px; animation-delay: 0.1s;">
+                
+                <!-- Counsellor Selection Panel -->
+                <div class="counsellor-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Select Counsellor</h3>
+                    </div>
+                    <div class="counsellor-list">
+                        <div th:each="profile : ${counsellorProfiles}" 
+                             class="counsellor-card" 
+                             th:classappend="${selectedCounsellor != null and selectedCounsellor.id == profile.user.id} ? 'selected' : ''"
+                             th:data-counsellor-id="${profile.user.id}"
+                             onclick="selectCounsellor(this)">
+                            <div class="counsellor-avatar" th:style="${profile.profileImageUrl} ? 'background-image: url(' + ${profile.profileImageUrl} + ')' : ''">
+                                <span th:unless="${profile.profileImageUrl}" th:text="${profile.user.initials}">MC</span>
+                            </div>
+                            <div class="counsellor-info">
+                                <div class="counsellor-name" th:text="${profile.fullTitle}">Dr. Michael Chen</div>
+                                <div class="counsellor-specialty" th:text="${profile.specializations}">Clinical Psychology</div>
+                                <div class="counsellor-rating">
+                                    <span class="stars">
+                                        <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                              th:class="${i <= profile.ratingAverage.intValue()} ? 'star filled' : 'star'">★</span>
+                                    </span>
+                                    <span class="rating-text" th:text="${profile.ratingAverage} + ' · ' + ${profile.yearsExperience} + ' years'">4.9 · 12 years</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty state if no counsellors -->
+                        <div th:if="${#lists.isEmpty(counsellorProfiles)}" class="empty-counsellors">
+                            <span>👨‍⚕️</span>
+                            <p>No counsellors available</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Date & Time Selection Panel -->
+                <div class="datetime-panel">
+                    <div class="calendar-section">
+                        <div class="calendar-header">
+                            <button type="button" class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                            <h3 class="calendar-title" id="calendarTitle">January 2026</h3>
+                            <button type="button" class="calendar-nav" onclick="changeMonth(1)">›</button>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Calendar will be rendered by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="time-section">
+                        <h4 class="time-title">Available Times</h4>
+                        <div class="time-slots" id="timeSlots">
+                            <button type="button" class="time-slot" data-time="09:00">9:00 AM</button>
+                            <button type="button" class="time-slot" data-time="10:00">10:00 AM</button>
+                            <button type="button" class="time-slot" data-time="11:00">11:00 AM</button>
+                            <button type="button" class="time-slot" data-time="11:30">11:30 AM</button>
+                            <button type="button" class="time-slot" data-time="14:00">2:00 PM</button>
+                            <button type="button" class="time-slot" data-time="15:00">3:00 PM</button>
+                            <button type="button" class="time-slot" data-time="15:30">3:30 PM</button>
+                        </div>
+                    </div>
+                    
+                    <div class="session-type-section">
+                        <h4 class="section-title">Session Type</h4>
+                        <div class="session-type-dropdown">
+                            <select id="sessionType" class="form-select" onchange="updateSessionType()">
+                                <option value="">Choose session type</option>
+                                <option th:each="type : ${sessionTypes}" 
+                                        th:value="${type.id}" 
+                                        th:text="${type.icon} + ' ' + ${type.name} + ' (' + ${type.durationMinutes} + ' min)' + (${type.free} ? ' - Free' : '')"
+                                        th:data-duration="${type.durationMinutes}">
+                                    📹 Video Call (50 min) - Free
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Booking Summary Panel -->
+                <div class="summary-panel">
+                    <div class="summary-card">
+                        <h3 class="summary-title">Booking Summary</h3>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Counsellor:</span>
+                            <span class="summary-value" id="summaryCounsellor">Not selected</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Date:</span>
+                            <span class="summary-value" id="summaryDate">Not selected</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Time:</span>
+                            <span class="summary-value" id="summaryTime">Not selected</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span class="summary-label">Session Type:</span>
+                            <span class="summary-value" id="summarySession">Not selected</span>
+                        </div>
+                        
+                        <div class="summary-divider"></div>
+                        
+                        <div class="summary-note">
+                            <label class="form-label">Notes for counsellor (optional)</label>
+                            <textarea id="bookingNotes" class="form-textarea" rows="3" 
+                                      placeholder="Any concerns you'd like to discuss..."></textarea>
+                        </div>
+                        
+                        <button type="button" id="bookButton" class="btn btn-primary btn-block" 
+                                onclick="submitBooking()" disabled>
+                            <span class="btn-icon">📅</span>
+                            Confirm Appointment
+                        </button>
+                        
+                        <p class="summary-disclaimer">
+                            You'll receive a confirmation email with meeting details.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Your Appointments Calendar View -->
+            <div class="card hover-lift fade-in appointments-card" style="margin-top: 32px; animation-delay: 0.2s;">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="card-title">
+                        <span>📅</span>
+                        Your Appointments
+                    </span>
+                    <div class="view-toggle">
+                        <button type="button" class="view-btn active" onclick="toggleView('calendar')" id="calendarViewBtn">
+                            <span>📆</span> Calendar
+                        </button>
+                        <button type="button" class="view-btn" onclick="toggleView('list')" id="listViewBtn">
+                            <span>📋</span> List
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(appointments)}" class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <div class="empty-state-title">No appointments yet</div>
+                        <div class="empty-state-description">Book your first session above!</div>
+                    </div>
+                    
+                    <!-- Calendar View -->
+                    <div id="appointmentsCalendarView" class="appointments-calendar-view" th:unless="${#lists.isEmpty(appointments)}">
+                        <div class="apt-calendar-header">
+                            <button type="button" class="calendar-nav" onclick="changeAppointmentMonth(-1)">‹</button>
+                            <h3 class="apt-calendar-title" id="aptCalendarTitle">January 2026</h3>
+                            <button type="button" class="calendar-nav" onclick="changeAppointmentMonth(1)">›</button>
+                        </div>
+                        <div class="apt-calendar-grid" id="aptCalendarGrid">
+                            <!-- Calendar will be rendered by JavaScript -->
+                        </div>
+                        <div class="apt-calendar-legend">
+                            <span class="legend-item"><span class="legend-dot scheduled"></span> Scheduled</span>
+                            <span class="legend-item"><span class="legend-dot confirmed"></span> Confirmed</span>
+                            <span class="legend-item"><span class="legend-dot completed"></span> Completed</span>
+                            <span class="legend-item"><span class="legend-dot cancelled"></span> Cancelled</span>
+                        </div>
+                    </div>
+                    
+                    <!-- List View (hidden by default) -->
+                    <div id="appointmentsListView" class="appointments-list-view" style="display: none;" th:unless="${#lists.isEmpty(appointments)}">
+                        <div th:each="apt : ${appointments}" class="appointment-list-item" th:classappend="${apt.status.name().toLowerCase()}">
+                            <div class="apt-list-date">
+                                <span class="apt-list-day" th:text="${#temporals.format(apt.startAt, 'dd')}">15</span>
+                                <span class="apt-list-month" th:text="${#temporals.format(apt.startAt, 'MMM')}">Jan</span>
+                                <span class="apt-list-year" th:text="${#temporals.format(apt.startAt, 'yyyy')}">2026</span>
+                            </div>
+                            <div class="apt-list-details">
+                                <div class="apt-list-time">
+                                    <span>🕐</span>
+                                    <span th:text="${#temporals.format(apt.startAt, 'HH:mm')} + ' - ' + ${#temporals.format(apt.endAt, 'HH:mm')}">10:00 - 10:50</span>
+                                </div>
+                                <div class="apt-list-counsellor">
+                                    <span class="apt-avatar" th:text="${apt.counsellor.initials}">SC</span>
+                                    <span th:text="${apt.counsellor.displayName}">Dr. Sarah Chen</span>
+                                </div>
+                                <div class="apt-list-type" th:if="${apt.sessionType}">
+                                    <span th:text="${apt.sessionType.icon}">📹</span>
+                                    <span th:text="${apt.sessionType.name}">Video Call</span>
+                                </div>
+                            </div>
+                            <div class="apt-list-status">
+                                <span class="apt-status" th:classappend="${apt.status.name().toLowerCase()}" th:text="${apt.status}">SCHEDULED</span>
+                            </div>
+                            <div class="apt-list-actions">
+                                <a th:if="${apt.meetingLink != null and (apt.status.name() == 'SCHEDULED' or apt.status.name() == 'CONFIRMED')}"
+                                   th:href="${apt.meetingLink}" target="_blank" class="btn btn-sm btn-primary">
+                                    Join
+                                </a>
+                                <form th:if="${apt.status.name() == 'SCHEDULED' or apt.status.name() == 'CONFIRMED'}"
+                                      th:action="@{/student/appointments/{id}/cancel(id=${apt.id})}" 
+                                      method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                        Cancel
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Appointment Details Modal -->
+            <div id="appointmentModal" class="apt-modal" style="display: none;">
+                <div class="apt-modal-content">
+                    <div class="apt-modal-header">
+                        <h3>📅 Appointment Details</h3>
+                        <button type="button" class="apt-modal-close" onclick="closeAppointmentModal()">×</button>
+                    </div>
+                    <div class="apt-modal-body" id="appointmentModalBody">
+                        <!-- Content will be filled by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pass appointments data to JavaScript via hidden elements -->
+            <div id="appointmentsDataHolder" style="display:none;">
+                <div th:each="apt : ${appointments}" class="apt-data-item"
+                     th:data-id="${apt.id}"
+                     th:data-start="${#temporals.format(apt.startAt, 'yyyy-MM-dd''T''HH:mm:ss')}"
+                     th:data-end="${#temporals.format(apt.endAt, 'yyyy-MM-dd''T''HH:mm:ss')}"
+                     th:data-status="${apt.status.name()}"
+                     th:data-counsellor="${apt.counsellor.displayName}"
+                     th:data-initials="${apt.counsellor.initials}"
+                     th:data-session-type="${apt.sessionType != null ? apt.sessionType.name : ''}"
+                     th:data-session-icon="${apt.sessionType != null ? apt.sessionType.icon : ''}">
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Hidden form for booking submission -->
+    <form id="bookingForm" th:action="@{/student/appointments/book}" method="post" style="display: none;">
+        <input type="hidden" name="counsellorId" id="formCounsellorId">
+        <input type="hidden" name="dateTime" id="formDateTime">
+        <input type="hidden" name="sessionTypeId" id="formSessionTypeId">
+        <input type="hidden" name="reason" id="formReason">
+    </form>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <script th:replace="~{fragments/layout :: scripts}"></script>
+    
+    <style>
+        /* Booking Container Styles */
+        .booking-container {
+            min-height: 500px;
+        }
+        
+        /* Counsellor Panel */
+        .counsellor-panel {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .counsellor-panel {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.05), transparent);
+        }
+        
+        [data-theme="dark"] .panel-header {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .panel-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .panel-title {
+            color: #ffffff;
+        }
+        
+        .counsellor-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .counsellor-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        [data-theme="dark"] .counsellor-card {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .counsellor-card:hover {
+            background: rgba(124, 93, 250, 0.05);
+        }
+        
+        .counsellor-card.selected {
+            background: rgba(124, 93, 250, 0.1);
+            border-left: 3px solid #7c5dfa;
+        }
+        
+        .counsellor-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .counsellor-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .counsellor-name {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        
+        .counsellor-specialty {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .counsellor-rating {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+        }
+        
+        .stars {
+            color: #fbbf24;
+        }
+        
+        .star.filled {
+            color: #fbbf24;
+        }
+        
+        .star:not(.filled) {
+            color: var(--border);
+        }
+        
+        .rating-text {
+            color: var(--text-muted);
+        }
+        
+        /* DateTime Panel */
+        .datetime-panel {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .datetime-panel {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-nav {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            color: #1a1a2e;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        
+        [data-theme="dark"] .calendar-nav {
+            background: #2a2a3e;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            transition: all 0.2s;
+        }
+        
+        .calendar-nav:hover {
+            background: rgba(124, 93, 250, 0.1);
+            border-color: #7c5dfa;
+        }
+        
+        .calendar-title {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .calendar-title {
+            color: #ffffff;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #666;
+            padding: 8px 0;
+        }
+        
+        [data-theme="dark"] .calendar-day-header {
+            color: #999;
+        }
+        
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .calendar-day {
+            color: #ffffff;
+        }
+        
+        .calendar-day:hover:not(.disabled):not(.selected) {
+            background: rgba(124, 93, 250, 0.1);
+        }
+        
+        .calendar-day.today {
+            border: 2px solid #7c5dfa;
+        }
+        
+        .calendar-day.selected {
+            background: #7c5dfa;
+            color: white;
+        }
+        
+        .calendar-day.disabled {
+            color: #999;
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .calendar-day.other-month {
+            color: #999;
+            opacity: 0.3;
+        }
+        
+        /* Time Slots */
+        .time-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .time-section {
+            border-top-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .time-title, .section-title {
+            margin: 0 0 12px 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .time-title,
+        [data-theme="dark"] .section-title {
+            color: #ffffff;
+        }
+        
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .time-slot {
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            color: #1a1a2e;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        [data-theme="dark"] .time-slot {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        .time-slot:hover:not(.disabled):not(.selected) {
+            border-color: #7c5dfa;
+            background: rgba(124, 93, 250, 0.05);
+        }
+        
+        .time-slot.selected {
+            background: #7c5dfa;
+            border-color: #7c5dfa;
+            color: white;
+        }
+        
+        .time-slot.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        /* Session Type */
+        .session-type-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .session-type-section {
+            border-top-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .session-type-dropdown .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            color: #1a1a2e;
+            font-size: 0.95rem;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px 12px;
+        }
+        
+        [data-theme="dark"] .session-type-dropdown .form-select {
+            background-color: #2a2a3e;
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23999' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        }
+        
+        .session-type-dropdown .form-select:focus {
+            outline: none;
+            border-color: #7c5dfa;
+            box-shadow: 0 0 0 3px rgba(124, 93, 250, 0.1);
+        }
+        
+        /* Summary Panel */
+        .summary-panel {
+            position: sticky;
+            top: 24px;
+        }
+        
+        .summary-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .summary-card {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .summary-title {
+            margin: 0 0 20px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .summary-title {
+            color: #ffffff;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .summary-item {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .summary-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        [data-theme="dark"] .summary-label {
+            color: #999;
+        }
+        
+        .summary-value {
+            color: #1a1a2e;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        [data-theme="dark"] .summary-value {
+            color: #ffffff;
+        }
+        
+        .summary-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+            margin: 20px 0;
+        }
+        
+        [data-theme="dark"] .summary-divider {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        
+        .summary-note {
+            margin-bottom: 20px;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 0.9rem;
+            resize: none;
+            font-family: inherit;
+        }
+        
+        .btn-block {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+        }
+        
+        .btn-icon {
+            margin-right: 8px;
+        }
+        
+        .summary-disclaimer {
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        
+        /* Appointments Grid */
+        .appointments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .appointment-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        
+        .apt-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(124, 93, 250, 0.05);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .apt-date {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .apt-day {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        
+        .apt-month {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        
+        .apt-time {
+            font-weight: 500;
+            color: var(--text);
+        }
+        
+        .apt-body {
+            padding: 16px;
+        }
+        
+        .apt-counsellor {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .apt-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .apt-type {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        
+        .apt-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .apt-status.scheduled {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .apt-status.confirmed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .apt-status.completed {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+        
+        .apt-status.cancelled {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        
+        .apt-actions {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Alert Styles */
+        .alert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .alert-icon {
+            font-size: 1.2rem;
+        }
+        
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .view-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .view-btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+        
+        .view-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        
+        /* Appointments Card - White Background */
+        .appointments-card {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+        }
+        
+        [data-theme="dark"] .appointments-card {
+            background: #1e1e2e !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+        
+        .appointments-card .card-header {
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.05), transparent);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .appointments-card .card-header {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .appointments-card .card-title {
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .appointments-card .card-title {
+            color: #ffffff;
+        }
+        
+        /* Appointments Calendar View */
+        .appointments-calendar-view {
+            padding: 16px 0;
+        }
+        
+        .apt-calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .apt-calendar-title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-width: 180px;
+            text-align: center;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .apt-calendar-title {
+            color: #ffffff;
+        }
+        
+        .apt-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .apt-calendar-grid {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.06);
+        }
+        
+        .apt-calendar-grid .calendar-day-header {
+            background: rgba(124, 93, 250, 0.1);
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #7c5dfa;
+        }
+        
+        .apt-calendar-cell {
+            background: #ffffff;
+            min-height: 100px;
+            padding: 8px;
+            position: relative;
+        }
+        
+        [data-theme="dark"] .apt-calendar-cell {
+            background: #1e1e2e;
+        }
+        
+        .apt-calendar-cell.other-month {
+            background: #f8f9fa;
+            opacity: 0.5;
+        }
+        
+        [data-theme="dark"] .apt-calendar-cell.other-month {
+            background: #16161e;
+        }
+        
+        .apt-calendar-cell.today {
+            background: rgba(124, 93, 250, 0.08);
+        }
+        
+        .apt-cell-date {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        
+        [data-theme="dark"] .apt-cell-date {
+            color: #ffffff;
+        }
+        
+        .apt-calendar-cell.today .apt-cell-date {
+            color: #7c5dfa;
+        }
+        
+        .apt-calendar-cell.other-month .apt-cell-date {
+            color: #999;
+        }
+        
+        .apt-calendar-event {
+            font-size: 0.7rem;
+            padding: 4px 6px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .apt-calendar-event:hover {
+            transform: scale(1.02);
+        }
+        
+        .apt-calendar-event.scheduled {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .apt-calendar-event.confirmed {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-left: 3px solid #10b981;
+        }
+        
+        .apt-calendar-event.completed {
+            background: rgba(107, 114, 128, 0.2);
+            color: #6b7280;
+            border-left: 3px solid #6b7280;
+        }
+        
+        .apt-calendar-event.cancelled {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-left: 3px solid #ef4444;
+            text-decoration: line-through;
+        }
+        
+        .apt-calendar-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        
+        .legend-dot.scheduled { background: rgba(59, 130, 246, 0.3); border-left: 3px solid #3b82f6; }
+        .legend-dot.confirmed { background: rgba(16, 185, 129, 0.3); border-left: 3px solid #10b981; }
+        .legend-dot.completed { background: rgba(107, 114, 128, 0.3); border-left: 3px solid #6b7280; }
+        .legend-dot.cancelled { background: rgba(239, 68, 68, 0.3); border-left: 3px solid #ef4444; }
+        
+        /* List View */
+        .appointments-list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .appointment-list-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 20px;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+        
+        [data-theme="dark"] .appointment-list-item {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .appointment-list-item:hover {
+            border-color: #7c5dfa;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .apt-list-date {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(124, 93, 250, 0.1);
+            border-radius: 10px;
+            min-width: 70px;
+        }
+        
+        .apt-list-day {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #7c5dfa;
+            line-height: 1;
+        }
+        
+        .apt-list-month {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+        }
+        
+        [data-theme="dark"] .apt-list-month {
+            color: #999;
+        }
+        
+        .apt-list-year {
+            font-size: 0.7rem;
+            color: #888;
+        }
+        
+        [data-theme="dark"] .apt-list-year {
+            color: #999;
+        }
+        
+        .apt-list-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .apt-list-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .apt-list-time {
+            color: #ffffff;
+        }
+        
+        .apt-list-counsellor {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .apt-list-counsellor {
+            color: #ffffff;
+        }
+        
+        .apt-list-type {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        [data-theme="dark"] .apt-list-type {
+            color: #999;
+        }
+        
+        .apt-list-status {
+            padding: 0 20px;
+        }
+        
+        .apt-list-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Appointment Modal */
+        .apt-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .apt-modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .apt-modal-content {
+            background: #1e1e2e;
+        }
+        
+        .apt-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.1), rgba(124, 93, 250, 0.05));
+        }
+        
+        [data-theme="dark"] .apt-modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .apt-modal-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .apt-modal-header h3 {
+            color: #ffffff;
+        }
+        
+        .apt-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            color: #666;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        
+        [data-theme="dark"] .apt-modal-close {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+        }
+        
+        .apt-modal-close:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        .apt-modal-body {
+            padding: 24px;
+            background: #ffffff;
+        }
+        
+        [data-theme="dark"] .apt-modal-body {
+            background: #1e1e2e;
+        }
+        
+        .apt-modal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            gap: 16px;
+        }
+        
+        [data-theme="dark"] .apt-modal-row {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .apt-modal-row:last-child {
+            border-bottom: none;
+        }
+        
+        .apt-modal-label {
+            color: #666;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            min-width: 100px;
+        }
+        
+        [data-theme="dark"] .apt-modal-label {
+            color: #999;
+        }
+        
+        .apt-modal-value {
+            font-weight: 500;
+            color: #1a1a2e;
+            text-align: right;
+        }
+        
+        [data-theme="dark"] .apt-modal-value {
+            color: #ffffff;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .booking-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-panel {
+                position: static;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .time-slots {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .apt-calendar-cell {
+                min-height: 60px;
+                padding: 4px;
+            }
+            
+            .apt-calendar-event {
+                font-size: 0.6rem;
+                padding: 2px 4px;
+            }
+            
+            .appointment-list-item {
+                flex-wrap: wrap;
+            }
+            
+            .apt-list-status, .apt-list-actions {
+                width: 100%;
+                justify-content: center;
+                padding-top: 12px;
+            }
+            
+            .view-toggle {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+    
+    <script>
+        // Booking state
+        let selectedCounsellor = null;
+        let selectedDate = null;
+        let selectedTime = null;
+        let currentMonth = new Date();
+        
+        // Initialize calendar on load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCalendar();
+            setupTimeSlots();
+        });
+        
+        function selectCounsellor(element) {
+            // Remove previous selection
+            document.querySelectorAll('.counsellor-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            element.classList.add('selected');
+            selectedCounsellor = {
+                id: element.dataset.counsellorId,
+                name: element.querySelector('.counsellor-name').textContent
+            };
+            
+            updateSummary();
+            checkBookingReady();
+        }
+        
+        function renderCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const title = document.getElementById('calendarTitle');
+            
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            title.textContent = new Date(year, month).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            
+            // Start with day headers
+            let html = `
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+            `;
+            
+            // Previous month days
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            for (let i = firstDay - 1; i >= 0; i--) {
+                html += `<div class="calendar-day other-month disabled">${prevMonthDays - i}</div>`;
+            }
+            
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const isToday = date.toDateString() === today.toDateString();
+                const isPast = date < new Date(today.toDateString());
+                const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+                
+                let classes = 'calendar-day';
+                if (isToday) classes += ' today';
+                if (isPast || isWeekend) classes += ' disabled';
+                if (isSelected) classes += ' selected';
+                
+                const onclick = (isPast || isWeekend) ? '' : `onclick="selectDate(${year}, ${month}, ${day})"`;
+                
+                html += `<div class="${classes}" ${onclick}>${day}</div>`;
+            }
+            
+            // Next month days
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+            const nextMonthDays = totalCells - (firstDay + daysInMonth);
+            for (let i = 1; i <= nextMonthDays; i++) {
+                html += `<div class="calendar-day other-month disabled">${i}</div>`;
+            }
+            
+            calendarGrid.innerHTML = html;
+        }
+        
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+        }
+        
+        function selectDate(year, month, day) {
+            selectedDate = new Date(year, month, day);
+            renderCalendar();
+            updateSummary();
+            checkBookingReady();
+        }
+        
+        function setupTimeSlots() {
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.addEventListener('click', function() {
+                    if (this.classList.contains('disabled')) return;
+                    
+                    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedTime = this.dataset.time;
+                    
+                    updateSummary();
+                    checkBookingReady();
+                });
+            });
+        }
+        
+        function updateSessionType() {
+            updateSummary();
+            checkBookingReady();
+        }
+        
+        function updateSummary() {
+            document.getElementById('summaryCounsellor').textContent = 
+                selectedCounsellor ? selectedCounsellor.name : 'Not selected';
+            
+            document.getElementById('summaryDate').textContent = 
+                selectedDate ? selectedDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' 
+                }) : 'Not selected';
+            
+            if (selectedTime) {
+                const [hours, minutes] = selectedTime.split(':');
+                const time = new Date(2000, 0, 1, hours, minutes);
+                document.getElementById('summaryTime').textContent = 
+                    time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            } else {
+                document.getElementById('summaryTime').textContent = 'Not selected';
+            }
+            
+            const sessionSelect = document.getElementById('sessionType');
+            document.getElementById('summarySession').textContent = 
+                sessionSelect.selectedIndex > 0 ? sessionSelect.options[sessionSelect.selectedIndex].text : 'Not selected';
+        }
+        
+        function checkBookingReady() {
+            const sessionType = document.getElementById('sessionType').value;
+            const isReady = selectedCounsellor && selectedDate && selectedTime && sessionType;
+            document.getElementById('bookButton').disabled = !isReady;
+        }
+        
+        function submitBooking() {
+            if (!selectedCounsellor || !selectedDate || !selectedTime) {
+                alert('Please complete all selections');
+                return;
+            }
+            
+            // Format datetime
+            const dateStr = selectedDate.toISOString().split('T')[0];
+            const dateTime = `${dateStr}T${selectedTime}`;
+            
+            // Fill form
+            document.getElementById('formCounsellorId').value = selectedCounsellor.id;
+            document.getElementById('formDateTime').value = dateTime;
+            document.getElementById('formSessionTypeId').value = document.getElementById('sessionType').value;
+            document.getElementById('formReason').value = document.getElementById('bookingNotes').value;
+            
+            // Submit
+            document.getElementById('bookingForm').submit();
+        }
+        
+        // ===== Appointments Calendar View =====
+        let appointmentMonth = new Date();
+        var appointmentsData = [];
+        
+        function loadAppointmentsData() {
+            const holder = document.getElementById('appointmentsDataHolder');
+            if (!holder) return;
+            
+            const items = holder.querySelectorAll('.apt-data-item');
+            items.forEach(item => {
+                appointmentsData.push({
+                    id: parseInt(item.dataset.id),
+                    startAt: item.dataset.start,
+                    endAt: item.dataset.end,
+                    status: item.dataset.status,
+                    counsellor: {
+                        displayName: item.dataset.counsellor,
+                        initials: item.dataset.initials
+                    },
+                    sessionType: item.dataset.sessionType ? {
+                        name: item.dataset.sessionType,
+                        icon: item.dataset.sessionIcon
+                    } : null
+                });
+            });
+        }
+        
+        function initAppointmentsCalendar() {
+            loadAppointmentsData();
+            if (appointmentsData.length > 0) {
+                renderAppointmentsCalendar();
+            }
+        }
+        
+        function renderAppointmentsCalendar() {
+            const grid = document.getElementById('aptCalendarGrid');
+            const title = document.getElementById('aptCalendarTitle');
+            
+            if (!grid) return;
+            
+            const year = appointmentMonth.getFullYear();
+            const month = appointmentMonth.getMonth();
+            
+            title.textContent = new Date(year, month).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            
+            // Day headers
+            let html = `
+                <div class="calendar-day-header">Sun</div>
+                <div class="calendar-day-header">Mon</div>
+                <div class="calendar-day-header">Tue</div>
+                <div class="calendar-day-header">Wed</div>
+                <div class="calendar-day-header">Thu</div>
+                <div class="calendar-day-header">Fri</div>
+                <div class="calendar-day-header">Sat</div>
+            `;
+            
+            // Previous month days
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            for (let i = firstDay - 1; i >= 0; i--) {
+                html += `<div class="apt-calendar-cell other-month">
+                    <div class="apt-cell-date">${prevMonthDays - i}</div>
+                </div>`;
+            }
+            
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const isToday = date.toDateString() === today.toDateString();
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // Find appointments for this day
+                const dayAppointments = getAppointmentsForDate(dateStr);
+                
+                let classes = 'apt-calendar-cell';
+                if (isToday) classes += ' today';
+                
+                let eventsHtml = '';
+                dayAppointments.forEach(apt => {
+                    const status = apt.status.toLowerCase();
+                    const time = formatTime(apt.startAt);
+                    eventsHtml += `<div class="apt-calendar-event ${status}" onclick="showAppointmentDetails(${apt.id})">
+                        ${time} ${apt.counsellor.displayName.split(' ').pop()}
+                    </div>`;
+                });
+                
+                html += `<div class="${classes}">
+                    <div class="apt-cell-date">${day}</div>
+                    ${eventsHtml}
+                </div>`;
+            }
+            
+            // Next month days
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+            const nextMonthDays = totalCells - (firstDay + daysInMonth);
+            for (let i = 1; i <= nextMonthDays; i++) {
+                html += `<div class="apt-calendar-cell other-month">
+                    <div class="apt-cell-date">${i}</div>
+                </div>`;
+            }
+            
+            grid.innerHTML = html;
+        }
+        
+        function getAppointmentsForDate(dateStr) {
+            if (typeof appointmentsData === 'undefined') return [];
+            return appointmentsData.filter(apt => {
+                const aptDate = apt.startAt.split('T')[0];
+                return aptDate === dateStr;
+            });
+        }
+        
+        function formatTime(dateTimeStr) {
+            const date = new Date(dateTimeStr);
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+        
+        function changeAppointmentMonth(delta) {
+            appointmentMonth.setMonth(appointmentMonth.getMonth() + delta);
+            renderAppointmentsCalendar();
+        }
+        
+        function toggleView(view) {
+            const calendarView = document.getElementById('appointmentsCalendarView');
+            const listView = document.getElementById('appointmentsListView');
+            const calendarBtn = document.getElementById('calendarViewBtn');
+            const listBtn = document.getElementById('listViewBtn');
+            
+            if (view === 'calendar') {
+                calendarView.style.display = 'block';
+                listView.style.display = 'none';
+                calendarBtn.classList.add('active');
+                listBtn.classList.remove('active');
+            } else {
+                calendarView.style.display = 'none';
+                listView.style.display = 'flex';
+                calendarBtn.classList.remove('active');
+                listBtn.classList.add('active');
+            }
+        }
+        
+        function showAppointmentDetails(aptId) {
+            const apt = appointmentsData.find(a => a.id === aptId);
+            if (!apt) return;
+            
+            const modal = document.getElementById('appointmentModal');
+            const body = document.getElementById('appointmentModalBody');
+            
+            const startDate = new Date(apt.startAt);
+            const endDate = new Date(apt.endAt);
+            
+            body.innerHTML = `
+                <div class="apt-modal-row">
+                    <span class="apt-modal-label">Date</span>
+                    <span class="apt-modal-value">${startDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                <div class="apt-modal-row">
+                    <span class="apt-modal-label">Time</span>
+                    <span class="apt-modal-value">${formatTime(apt.startAt)} - ${formatTime(apt.endAt)}</span>
+                </div>
+                <div class="apt-modal-row">
+                    <span class="apt-modal-label">Counsellor</span>
+                    <span class="apt-modal-value">${apt.counsellor.displayName}</span>
+                </div>
+                <div class="apt-modal-row">
+                    <span class="apt-modal-label">Session Type</span>
+                    <span class="apt-modal-value">${apt.sessionType ? apt.sessionType.icon + ' ' + apt.sessionType.name : 'N/A'}</span>
+                </div>
+                <div class="apt-modal-row">
+                    <span class="apt-modal-label">Status</span>
+                    <span class="apt-status ${apt.status.toLowerCase()}">${apt.status}</span>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+        
+        function closeAppointmentModal() {
+            document.getElementById('appointmentModal').style.display = 'none';
+        }
+        
+        // Close modal on outside click
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('appointmentModal');
+            if (e.target === modal) {
+                closeAppointmentModal();
+            }
+        });
+        
+        // Initialize appointments calendar on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initAppointmentsCalendar();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Care Plan')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/layout :: sidebar-student}"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>💖</span>
+                    Your Care Plan
+                </h1>
+                <p class="page-subtitle">Personalized recommendations based on your assessments</p>
+            </div>
+            
+            <div th:if="${carePlan != null}">
+                <!-- Risk Level Banner -->
+                <div class="card fade-in" style="animation-delay: 0.1s; margin-bottom: 24px; padding: 0; overflow: hidden;">
+                    <div th:classappend="${carePlan.riskLevel == 'MINIMAL' ? 'risk-minimal' : (carePlan.riskLevel == 'MILD' ? 'risk-mild' : (carePlan.riskLevel == 'MODERATE' ? 'risk-moderate' : 'risk-severe'))}"
+                         style="padding: 24px; display: flex; align-items: center; gap: 20px;">
+                        <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                            <span th:text="${carePlan.riskLevel == 'MINIMAL' ? '🌟' : (carePlan.riskLevel == 'MILD' ? '💚' : (carePlan.riskLevel == 'MODERATE' ? '💛' : '🧡'))}">💚</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 4px;">Current Status</div>
+                            <div style="font-size: 1.5rem; font-weight: 700;" th:text="${carePlan.riskLevel}">MILD</div>
+                        </div>
+                        <a th:href="@{/student/assessment}" class="btn btn-secondary" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white;">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Retake Assessment
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Summary -->
+                <div class="card fade-in" style="animation-delay: 0.15s; margin-bottom: 24px;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-info-circle"></i>
+                            Summary
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p style="color: var(--text-secondary); line-height: 1.7; margin: 0;" th:text="${carePlan.summary}">
+                            Based on your recent assessment results, here are personalized recommendations to support your wellbeing.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Recommendations -->
+                <div class="card fade-in" style="animation-delay: 0.2s;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-list-check"></i>
+                            Recommended Actions
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${recommendations != null}" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div th:each="rec, iter : ${recommendations}" 
+                                 style="display: flex; gap: 16px; align-items: flex-start; padding: 20px; background: var(--surface-2); border-radius: 16px;">
+                                <div th:classappend="${rec.priority == 'HIGH' ? 'priority-high' : (rec.priority == 'MEDIUM' ? 'priority-medium' : 'priority-low')}"
+                                     style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;">
+                                    <span th:text="${iter.index + 1}">1</span>
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                        <h4 style="font-weight: 600; color: var(--text); margin: 0;" th:text="${rec.title}">Daily Mood Tracking</h4>
+                                        <span class="badge" 
+                                              th:classappend="${rec.priority == 'HIGH' ? 'badge-danger' : (rec.priority == 'MEDIUM' ? 'badge-warning' : 'badge-success')}"
+                                              th:text="${rec.priority}">HIGH</span>
+                                    </div>
+                                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0; line-height: 1.6;" 
+                                       th:text="${rec.description}">Continue logging your mood daily to identify patterns and triggers.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mochi Encouragement -->
+                <div class="card fade-in" style="animation-delay: 0.3s; margin-top: 24px;">
+                    <div style="display: flex; gap: 20px; align-items: center; padding: 8px;">
+                        <div class="pet-avatar" style="width: 80px; height: 80px; font-size: 2.5rem;">🐱</div>
+                        <div>
+                            <p style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Mochi says:</p>
+                            <p style="color: var(--text-secondary); margin: 0; line-height: 1.6;">
+                                "You're doing great! Remember, taking care of your mental health is a journey, not a destination. I'm here to support you every step of the way! 💪"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- No Care Plan State -->
+            <div th:unless="${carePlan != null}" class="card fade-in">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-title">No care plan yet</div>
+                    <div class="empty-state-description">Complete a self-assessment to receive personalized recommendations.</div>
+                    <a th:href="@{/student/assessment}" class="btn btn-primary">Take Assessment</a>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        .risk-minimal {
+            background: linear-gradient(135deg, var(--accent-2), #a8d5ba);
+            color: white;
+        }
+        .risk-mild {
+            background: linear-gradient(135deg, #fbbf24, #fcd34d);
+            color: #1a1a1a;
+        }
+        .risk-moderate {
+            background: linear-gradient(135deg, var(--accent-3), #f4a58a);
+            color: white;
+        }
+        .risk-severe {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
+        
+        .priority-high {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+            color: #dc2626;
+            font-weight: 700;
+        }
+        .priority-medium {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05));
+            color: #b45309;
+            font-weight: 700;
+        }
+        .priority-low {
+            background: linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.15), rgba(var(--accent-2-rgb), 0.05));
+            color: var(--accent-2);
+            font-weight: 700;
+        }
+    </style>
+</body>
+</html>

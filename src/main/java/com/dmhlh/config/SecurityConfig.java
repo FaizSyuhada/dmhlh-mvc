@@ -1,0 +1,135 @@
+package com.dmhlh.config;
+
+import com.dmhlh.security.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+/**
+ * Spring Security Configuration
+ * Configures authentication, authorization, and security filters
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
+public class SecurityConfig {
+
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
+
+    /**
+     * Password Encoder
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Authentication Provider
+     */
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    /**
+     * Authentication Manager
+     */
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    /**
+     * Custom Authentication Success Handler - redirects based on role
+     */
+    @Bean
+    public AuthenticationSuccessHandler authenticationSuccessHandler() {
+        return (request, response, authentication) -> {
+            var authorities = authentication.getAuthorities();
+            String redirectUrl = "/student/dashboard"; // default
+            
+            for (var auth : authorities) {
+                String role = auth.getAuthority();
+                if (role.equals("ROLE_ADMIN")) {
+                    redirectUrl = "/admin/dashboard";
+                    break;
+                } else if (role.equals("ROLE_COUNSELLOR")) {
+                    redirectUrl = "/counsellor/dashboard";
+                    break;
+                } else if (role.equals("ROLE_FACULTY")) {
+                    redirectUrl = "/faculty/dashboard";
+                    break;
+                }
+            }
+            
+            response.sendRedirect(request.getContextPath() + redirectUrl);
+        };
+    }
+
+    /**
+     * Security Filter Chain
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .authenticationProvider(authenticationProvider())
+            .authorizeHttpRequests(auth -> auth
+                // Public resources
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**", "/favicon.ico").permitAll()
+                .requestMatchers("/login", "/register", "/error", "/403", "/404").permitAll()
+                .requestMatchers("/mock-login/**").permitAll() // For development
+                
+                // Role-based access
+                .requestMatchers("/student/**").hasRole("STUDENT")
+                .requestMatchers("/counsellor/**").hasRole("COUNSELLOR")
+                .requestMatchers("/faculty/**").hasRole("FACULTY")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/moderation/**").hasAnyRole("ADMIN", "COUNSELLOR")
+                .requestMatchers("/forum/**").hasAnyRole("STUDENT", "COUNSELLOR", "ADMIN")
+                .requestMatchers("/profile/**").authenticated()
+                .requestMatchers("/consent/**").authenticated()
+                
+                // All other requests require authentication
+                .anyRequest().authenticated()
+            )
+            .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .successHandler(authenticationSuccessHandler())
+                .failureUrl("/login?error=true")
+                .permitAll()
+            )
+            .logout(logout -> logout
+                .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
+                .logoutSuccessUrl("/login?logout=true")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+                .permitAll()
+            )
+            .exceptionHandling(ex -> ex
+                .accessDeniedPage("/403")
+            )
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .expiredUrl("/login?expired=true")
+            );
+        
+        return http.build();
+    }
+}

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Review Report - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: sidebar-counsellor}"></div>
+        <div sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/moderation}">Moderation</a></li>
+                    <li class="breadcrumb-item active">Report #<span th:text="${report.id}">1</span></li>
+                </ol>
+            </nav>
+            
+            <div class="grid grid-cols-2 gap-4 card-grid" style="grid-template-columns: 2fr 1fr;">
+                <!-- Reported Content -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">🚩 Reported Content</span>
+                    </div>
+                    <div class="card-body" style="padding: 24px;">
+                        <div style="margin-bottom: 16px;">
+                            <span style="background: rgba(224, 122, 95, 0.15); color: var(--accent-3); padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; margin-right: 8px;" th:text="${report.reason}">Reason</span>
+                            <span style="background: rgba(124, 111, 174, 0.15); color: var(--accent); padding: 4px 12px; border-radius: 6px; font-size: 0.85rem;" th:text="${report.status}">Status</span>
+                        </div>
+                        
+                        <!-- Post Content -->
+                        <div th:if="${report.post != null}" style="border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                            <h6 style="font-weight: 600; margin-bottom: 8px;">Post Content:</h6>
+                            <p style="white-space: pre-wrap; margin-bottom: 12px;" th:text="${report.post.content}">Content</p>
+                            <small style="color: var(--text-muted);">
+                                By <span style="color: var(--accent); font-weight: 500;" th:text="${report.post.anonymousAlias}">Alias</span>
+                                on <span th:text="${#temporals.format(report.post.createdAt, 'MMM dd, yyyy')}">Date</span>
+                            </small>
+                        </div>
+                        
+                        <!-- Thread Content -->
+                        <div th:if="${report.thread != null and report.post == null}" style="border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                            <h6 style="font-weight: 600; margin-bottom: 8px;">Thread:</h6>
+                            <h5 style="margin-bottom: 8px;" th:text="${report.thread.title}">Title</h5>
+                            <p style="white-space: pre-wrap; margin-bottom: 12px;" th:text="${report.thread.content}">Content</p>
+                            <small style="color: var(--text-muted);">
+                                By <span style="color: var(--accent); font-weight: 500;" th:text="${report.thread.anonymousAlias}">Alias</span>
+                            </small>
+                        </div>
+                        
+                        <!-- Reporter Details -->
+                        <div th:if="${report.details}" style="background: var(--surface-2); border-radius: 12px; padding: 16px;">
+                            <strong>Reporter's Details:</strong>
+                            <p style="margin: 8px 0 0 0;" th:text="${report.details}">Details</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">⚖️ Take Action</span>
+                    </div>
+                    <div class="card-body" style="padding: 24px;">
+                        <!-- Remove -->
+                        <form th:action="@{/moderation/report/{id}/resolve(id=${report.id})}" method="post" style="margin-bottom: 16px;">
+                            <input type="hidden" name="action" value="REMOVE">
+                            <div style="margin-bottom: 12px;">
+                                <textarea class="form-control" name="note" rows="2" placeholder="Resolution note (optional)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; background: var(--accent-3);">
+                                🗑️ Remove Content
+                            </button>
+                        </form>
+                        
+                        <!-- Hide -->
+                        <form th:action="@{/moderation/report/{id}/resolve(id=${report.id})}" method="post" style="margin-bottom: 16px;">
+                            <input type="hidden" name="action" value="HIDE">
+                            <button type="submit" class="btn btn-outline" style="width: 100%;">
+                                👁️ Hide Content
+                            </button>
+                        </form>
+                        
+                        <!-- Dismiss -->
+                        <form th:action="@{/moderation/report/{id}/dismiss(id=${report.id})}" method="post">
+                            <div style="margin-bottom: 12px;">
+                                <textarea class="form-control" name="note" rows="2" placeholder="Dismissal reason (optional)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline" style="width: 100%;">
+                                ❌ Dismiss Report
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation - Role-specific -->
+    <nav sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: mobile-nav-counsellor}"></nav>
+    <div sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: mobile-menu-counsellor}"></div>
+    <nav sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

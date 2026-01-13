@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Integrations - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>🔌</span> Integration Settings
+                </h1>
+                <p class="page-subtitle">Manage external integration configurations</p>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Info Banner -->
+            <div style="background: rgba(124, 111, 174, 0.1); border: 1px solid rgba(124, 111, 174, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <span style="color: var(--accent);">💡 These settings are placeholders for external integrations. No actual external calls are made in this demo.</span>
+            </div>
+            
+            <!-- Add Setting Card -->
+            <div class="card hover-lift" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-plus-circle"></i> Add Setting</span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/integrations/save}" method="post">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                            <div class="form-group" style="flex: 1; min-width: 200px;">
+                                <input type="text" class="form-control" name="key" placeholder="Setting Key" required>
+                            </div>
+                            <div class="form-group" style="flex: 1; min-width: 200px;">
+                                <input type="text" class="form-control" name="value" placeholder="Value">
+                            </div>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 0;">
+                                <input type="checkbox" name="isSecret" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                <span>Secret</span>
+                            </label>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Settings List -->
+            <div class="card hover-lift">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-list-ul"></i> Current Settings</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Value</th>
+                                    <th>Secret</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="setting : ${settings}">
+                                    <td><code style="background: var(--surface-2); padding: 4px 8px; border-radius: 4px;" th:text="${setting.settingKey}">KEY</code></td>
+                                    <td th:text="${setting.secret} ? '••••••••' : (${setting.settingValue} ?: '-')">Value</td>
+                                    <td>
+                                        <span th:if="${setting.secret}" style="background: rgba(251, 191, 36, 0.15); color: #b45309; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">Yes</span>
+                                        <span th:unless="${setting.secret}" style="background: var(--surface-2); color: var(--text-muted); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">No</span>
+                                    </td>
+                                    <td>
+                                        <form th:action="@{/admin/integrations/{id}/delete(id=${setting.id})}" method="post" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline" style="color: var(--accent-3);" onclick="return confirm('Delete?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Assessment Management - Admin')}"></head>
+<body>
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <main class="main-content">
+            <div class="page-header fade-in" style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h1 class="page-title">
+                        <span>📋</span> Assessment Management
+                    </h1>
+                    <p class="page-subtitle">Create and manage self-assessment questionnaires</p>
+                </div>
+                <a th:href="@{/admin/assessments/new}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>New Assessment</span>
+                </a>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success fade-in" style="margin-bottom: 24px;">
+                <span>✅</span>
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Assessments List -->
+            <div class="card hover-lift fade-in" style="animation-delay: 0.1s;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="bi bi-list-check"></i>
+                        All Assessments
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div th:if="${#lists.isEmpty(assessments)}" class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-title">No assessments yet</div>
+                        <div class="empty-state-description">Create your first assessment to get started</div>
+                    </div>
+                    
+                    <div class="table-responsive" th:unless="${#lists.isEmpty(assessments)}">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Questions</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="a : ${assessments}">
+                                    <td>
+                                        <span class="badge-code" th:text="${a.code}">PHQ9</span>
+                                    </td>
+                                    <td th:text="${a.name}">Assessment Name</td>
+                                    <td>
+                                        <span class="text-muted" th:text="${#strings.abbreviate(a.description, 50) ?: '-'}">Description</span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/admin/assessments/{id}/questions(id=${a.id})}" class="link-primary">
+                                            Manage Questions
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" 
+                                              th:classappend="${a.active} ? 'active' : 'inactive'"
+                                              th:text="${a.active} ? 'Active' : 'Inactive'">Status</span>
+                                    </td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <a th:href="@{/admin/assessments/{id}/edit(id=${a.id})}" 
+                                               class="btn btn-sm btn-outline">Edit</a>
+                                            <form th:action="@{/admin/assessments/{id}/toggle(id=${a.id})}" 
+                                                  method="post" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm" 
+                                                        th:classappend="${a.active} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                                        th:text="${a.active} ? 'Deactivate' : 'Activate'">Toggle</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        .badge-code {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(124, 93, 250, 0.1);
+            color: var(--accent);
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .status-badge.inactive {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .link-primary {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        .link-primary:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 12px;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+    </style>
+</body>
+</html>

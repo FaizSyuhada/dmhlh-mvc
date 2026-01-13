@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Forum Settings - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>⚙️</span> Forum Settings
+                </h1>
+                <p class="page-subtitle">Configure community forum options</p>
+            </div>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <!-- Settings Card -->
+            <div class="card hover-lift">
+                <div class="card-body" style="padding: 32px;">
+                    <form th:action="@{/admin/forum-settings/update}" method="post">
+                        <div class="grid grid-cols-2 gap-4" style="margin-bottom: 24px;">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <input type="checkbox" name="allowPosting" th:checked="${settings.allowPosting}" style="width: 20px; height: 20px; accent-color: var(--accent);">
+                                <span>Allow Posting</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                <input type="checkbox" name="allowAnonymous" th:checked="${settings.allowAnonymous}" style="width: 20px; height: 20px; accent-color: var(--accent);">
+                                <span>Allow Anonymous Posting</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;" title="When enabled, posts containing sensitive/harmful content will require admin approval before being visible">
+                                <input type="checkbox" name="requireModeration" th:checked="${settings.requireModeration}" style="width: 20px; height: 20px; accent-color: var(--accent);">
+                                <span>Require Moderation for Harmful Content</span>
+                            </label>
+                            <div class="form-group">
+                                <label class="form-label">Max Post Length</label>
+                                <input type="number" class="form-control" name="maxPostLength" th:value="${settings.maxPostLength}" min="100" max="50000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Max Title Length</label>
+                                <input type="number" class="form-control" name="maxTitleLength" th:value="${settings.maxTitleLength}" min="10" max="500">
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">🚫 Banned Words <span style="color: #e63946; font-weight: 500;">(Hard Block)</span></label>
+                                <textarea class="form-control" name="bannedWords" rows="3" th:text="${settings.bannedWords}" placeholder="spam, advertisement, promotional"></textarea>
+                                <small style="color: var(--text-muted);">Posts containing these words will be <strong>immediately rejected</strong>. Comma-separated.</small>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">⚠️ Moderation Words <span style="color: #f4a261; font-weight: 500;">(Soft Block - Requires Review)</span></label>
+                                <textarea class="form-control" name="moderationWords" rows="3" th:text="${settings.moderationWords}" placeholder="suicide, self harm, kill myself, want to die"></textarea>
+                                <small style="color: var(--text-muted);">Posts containing these potentially harmful words will be <strong>held for moderator approval</strong>. This helps provide support for users who may be struggling. Comma-separated. Leave empty for default sensitive words.</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Explanation Card -->
+                        <div style="background: rgba(124, 111, 174, 0.1); border-radius: 12px; padding: 16px; margin-bottom: 24px; border: 1px solid rgba(124, 111, 174, 0.2);">
+                            <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; color: var(--accent);">📋 How Content Moderation Works</h4>
+                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); line-height: 1.8; font-size: 0.9rem;">
+                                <li><strong>Banned Words:</strong> Content is completely blocked - user sees an error and cannot post.</li>
+                                <li><strong>Moderation Words:</strong> Content is submitted but held for admin review. User sees a message that their post is pending approval.</li>
+                                <li>This allows the platform to detect potentially harmful content (like suicidal ideation) and intervene appropriately.</li>
+                            </ul>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Save Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-admin}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-admin}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

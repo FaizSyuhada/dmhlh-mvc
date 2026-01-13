@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${module.title} + ' - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/student/modules}">Modules</a></li>
+                    <li class="breadcrumb-item active" th:text="${module.title}">Module</li>
+                </ol>
+            </nav>
+            
+            <!-- Module Content Card -->
+            <div class="card hover-lift">
+                <div class="card-body" style="padding: 32px;">
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+                        <h2 style="font-size: 1.75rem; font-weight: 700; margin: 0;" th:text="${module.title}">Module Title</h2>
+                        <span class="module-type-badge" th:text="${module.type}">TEXT</span>
+                    </div>
+                    
+                    <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 24px;" th:text="${module.description}">Description</p>
+                    
+                    <hr style="border-color: var(--border); margin: 24px 0;">
+                    
+                    <!-- Video if available -->
+                    <div th:if="${module.videoUrl != null and !module.videoUrl.isEmpty()}" style="margin-bottom: 24px;">
+                        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px;">
+                            <iframe th:src="${module.videoUrl}" 
+                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                                    title="Video content"
+                                    allowfullscreen></iframe>
+                        </div>
+                    </div>
+                    
+                    <!-- Text content -->
+                    <div th:if="${module.bodyContent != null}" 
+                         class="module-content prose" 
+                         th:utext="${module.bodyContent}"
+                         style="line-height: 1.7; color: var(--text);">
+                        Content goes here
+                    </div>
+                </div>
+                
+                <!-- Quiz Section -->
+                <div th:if="${hasQuiz}" style="background: var(--surface-2); border-top: 1px solid var(--border); padding: 20px 32px; border-radius: 0 0 20px 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 1.5rem;">📝</span>
+                            <strong>Quiz Available</strong>
+                            <span th:if="${lastAttempt != null}" style="color: var(--text-muted);">
+                                Last attempt: <span th:text="${#numbers.formatDecimal(lastAttempt.scorePercentage, 1, 0)}">80</span>%
+                            </span>
+                        </div>
+                        <a th:href="@{/student/quiz/{id}(id=${module.id})}" class="btn btn-primary">
+                            <i class="bi bi-pencil-square"></i>
+                            <span th:text="${lastAttempt != null} ? 'Retake Quiz' : 'Take Quiz'">Take Quiz</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Back Button -->
+            <a th:href="@{/student/modules}" class="btn btn-outline" style="margin-top: 24px;">
+                <i class="bi bi-arrow-left"></i> Back to Modules
+            </a>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <style>
+        .module-type-badge {
+            background: var(--surface-2);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .module-content h2 { font-size: 1.5rem; font-weight: 600; margin: 24px 0 12px; }
+        .module-content h3 { font-size: 1.25rem; font-weight: 600; margin: 20px 0 10px; }
+        .module-content p { margin-bottom: 16px; }
+        .module-content ul, .module-content ol { padding-left: 24px; margin-bottom: 16px; }
+        .module-content li { margin-bottom: 8px; }
+    </style>
+    
+    <script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

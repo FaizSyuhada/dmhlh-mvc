@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Learning Modules')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/layout :: sidebar-student}"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>📚</span>
+                    Learning Modules
+                </h1>
+                <p class="page-subtitle">Explore resources to improve your mental health literacy</p>
+            </div>
+            
+            <!-- Modules Grid -->
+            <div class="grid grid-cols-2 gap-4 card-grid">
+                <div th:each="module : ${modules}" class="card hover-lift">
+                    <div style="position: relative;">
+                        <!-- Module Type Badge -->
+                        <div style="position: absolute; top: 0; right: 0;">
+                            <span th:if="${module.type.name() == 'VIDEO'}" class="badge" style="background: rgba(224, 122, 95, 0.15); color: var(--accent-3);">
+                                <i class="bi bi-play-circle me-1"></i> Video
+                            </span>
+                            <span th:if="${module.type.name() == 'TEXT'}" class="badge" style="background: rgba(var(--accent-rgb), 0.15); color: var(--accent);">
+                                <i class="bi bi-file-text me-1"></i> Article
+                            </span>
+                            <span th:if="${module.type.name() == 'MIXED'}" class="badge" style="background: rgba(var(--accent-2-rgb), 0.15); color: var(--accent-2);">
+                                <i class="bi bi-collection me-1"></i> Mixed
+                            </span>
+                        </div>
+                        
+                        <!-- Module Icon -->
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15), rgba(var(--accent-rgb), 0.05)); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                            <i class="bi bi-book" style="font-size: 1.5rem; color: var(--accent);"></i>
+                        </div>
+                        
+                        <!-- Module Title -->
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 8px;" 
+                            th:text="${module.title}">Understanding Anxiety</h3>
+                        
+                        <!-- Module Description -->
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;"
+                           th:text="${module.description}">Learn about different types of anxiety and how to recognize symptoms.</p>
+                        
+                        <!-- Module Actions -->
+                        <div style="display: flex; gap: 12px;">
+                            <a th:href="@{/student/modules/{id}(id=${module.id})}" class="btn btn-primary" style="flex: 1;">
+                                <i class="bi bi-arrow-right"></i>
+                                <span>Start Learning</span>
+                            </a>
+                            <th:block th:if="${module.hasQuiz}">
+                                <a th:href="@{/student/quiz/{moduleId}(moduleId=${module.id})}" class="btn btn-secondary">
+                                    <i class="bi bi-question-circle"></i>
+                                    <span>Quiz</span>
+                                </a>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(modules)}" class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📖</div>
+                    <div class="empty-state-title">No modules available</div>
+                    <div class="empty-state-description">Check back soon for new learning content.</div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

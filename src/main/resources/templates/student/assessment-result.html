@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Assessment Result - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>✅</span> Assessment Complete
+                </h1>
+                <p class="page-subtitle" th:text="${result.definition.name} + ' Results'">PHQ-9 Results</p>
+            </div>
+            
+            <!-- Result Summary Card -->
+            <div class="result-card card hover-lift fade-in" style="animation-delay: 0.1s;">
+                <!-- Score Circle -->
+                <div class="score-circle-container">
+                    <div class="score-circle" th:classappend="${result.severity.name()}">
+                        <span class="score-value" th:text="${result.totalScore}">8</span>
+                        <span class="score-max" th:text="'/ ' + ${result.definition.maxScore}">/ 27</span>
+                    </div>
+                </div>
+                
+                <!-- Severity Badge -->
+                <div class="severity-badge-container">
+                    <span class="severity-badge" th:classappend="${result.severity.name()}">
+                        <span th:switch="${result.severity.name()}">
+                            <span th:case="'MINIMAL'">✅ Minimal</span>
+                            <span th:case="'MILD'">💡 Mild</span>
+                            <span th:case="'MODERATE'">⚠️ Moderate</span>
+                            <span th:case="'MODERATELY_SEVERE'">🔶 Moderately Severe</span>
+                            <span th:case="'SEVERE'">🆘 Severe</span>
+                        </span>
+                        <span th:text="${result.definition.code == 'GAD7'} ? ' Anxiety' : ' Depression'"></span>
+                    </span>
+                </div>
+                
+                <!-- Assessment Info -->
+                <div class="assessment-info">
+                    <span th:text="${result.definition.name}">PHQ-9</span>
+                    <span>•</span>
+                    <span th:text="${#temporals.format(result.completedAt, 'MMM dd, yyyy HH:mm')}">Jan 12, 2026</span>
+                </div>
+            </div>
+            
+            <!-- Feedback Message -->
+            <div class="card fade-in" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <span class="emoji">💬</span>
+                        What This Means
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="feedback-message" th:text="${feedbackMessage}">
+                        Your score suggests mild depression...
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Recommendations -->
+            <div class="card fade-in" style="animation-delay: 0.3s;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <span class="emoji">📋</span>
+                        Personalized Recommendations
+                    </span>
+                </div>
+                <div class="card-body">
+                    <ul class="recommendations-list">
+                        <li th:each="recommendation : ${recommendations}" class="recommendation-item">
+                            <span class="recommendation-check">✓</span>
+                            <span th:text="${recommendation}">Recommendation text</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Disclaimer -->
+            <div class="disclaimer-card fade-in" style="animation-delay: 0.4s;">
+                <div class="disclaimer-icon">ℹ️</div>
+                <div class="disclaimer-text">
+                    <strong>Important:</strong> This is a screening tool, not a clinical diagnosis. 
+                    Only a qualified mental health professional can diagnose depression or anxiety disorders. 
+                    If you're concerned about your mental health, please speak with a counselor.
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="action-buttons fade-in" style="animation-delay: 0.5s;">
+                <a th:href="@{/student/dashboard}" class="btn btn-outline">
+                    <span>🏠</span> Dashboard
+                </a>
+                <a th:href="@{/student/care-plan}" class="btn btn-outline">
+                    <span>💊</span> View Care Plan
+                </a>
+                <a th:href="@{/student/ai-coach}" class="btn btn-outline">
+                    <span>🤖</span> Talk to AI Coach
+                </a>
+                <a th:href="@{/student/appointments}" class="btn btn-primary">
+                    <span>📅</span> Book Appointment
+                </a>
+            </div>
+            
+            <!-- Previous Results Link -->
+            <div class="history-link fade-in" style="animation-delay: 0.6s;">
+                <a th:href="@{/student/assessment/history}">
+                    <span>📊</span> View Assessment History
+                </a>
+            </div>
+            
+            <!-- Footer -->
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        /* Result Card */
+        .result-card {
+            text-align: center;
+            padding: 40px 32px;
+            margin-bottom: 24px;
+        }
+        
+        /* Score Circle */
+        .score-circle-container {
+            margin-bottom: 24px;
+        }
+        
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-2);
+            border: 4px solid var(--border);
+        }
+        
+        .score-circle.MINIMAL {
+            border-color: var(--accent-2);
+            background: rgba(129, 178, 154, 0.1);
+        }
+        
+        .score-circle.MILD {
+            border-color: var(--accent);
+            background: rgba(124, 111, 174, 0.1);
+        }
+        
+        .score-circle.MODERATE {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        .score-circle.MODERATELY_SEVERE {
+            border-color: var(--accent-3);
+            background: rgba(224, 122, 95, 0.1);
+        }
+        
+        .score-circle.SEVERE {
+            border-color: #dc2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+        
+        .score-value {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        
+        .score-max {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* Severity Badge */
+        .severity-badge-container {
+            margin-bottom: 16px;
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .severity-badge.MINIMAL {
+            background: rgba(129, 178, 154, 0.2);
+            color: var(--accent-2);
+        }
+        
+        .severity-badge.MILD {
+            background: rgba(124, 111, 174, 0.2);
+            color: var(--accent);
+        }
+        
+        .severity-badge.MODERATE {
+            background: rgba(245, 158, 11, 0.2);
+            color: #b45309;
+        }
+        
+        .severity-badge.MODERATELY_SEVERE {
+            background: rgba(224, 122, 95, 0.2);
+            color: var(--accent-3);
+        }
+        
+        .severity-badge.SEVERE {
+            background: rgba(220, 38, 38, 0.2);
+            color: #dc2626;
+        }
+        
+        /* Assessment Info */
+        .assessment-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Feedback Message */
+        .feedback-message {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--text);
+            margin: 0;
+        }
+        
+        /* Recommendations */
+        .recommendations-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .recommendation-item:last-child {
+            border-bottom: none;
+        }
+        
+        .recommendation-check {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-2), #6ee7b7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        
+        /* Disclaimer */
+        .disclaimer-card {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: var(--surface-2);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            align-items: flex-start;
+        }
+        
+        .disclaimer-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .disclaimer-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+            }
+        }
+        
+        /* History Link */
+        .history-link {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .history-link a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        
+        .history-link a:hover {
+            color: var(--accent);
+        }
+    </style>
+</body>
+</html>

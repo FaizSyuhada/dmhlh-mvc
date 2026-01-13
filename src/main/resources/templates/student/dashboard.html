@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/layout :: sidebar-student}"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>☀️</span>
+                    Welcome back, <span th:text="${user.displayName}">User</span>!
+                </h1>
+                <p class="page-subtitle">Here's how you're doing today</p>
+            </div>
+            
+            <!-- Streak Banner - Only show if user has a streak -->
+            <div th:if="${dashboard.userPoints != null and dashboard.userPoints.currentStreak > 0}" 
+                 class="streak-banner fade-in" style="animation-delay: 0.1s;">
+                <span class="streak-icon">🔥</span>
+                <div class="streak-content">
+                    <div class="streak-title" th:text="${dashboard.userPoints.currentStreak} + ' Day Streak!'">0 Day Streak!</div>
+                    <div class="streak-subtitle">Keep it up! You've been consistent with your mood tracking.</div>
+                </div>
+                <a th:href="@{/student/leaderboard}" class="btn btn-sm btn-secondary">View Stats</a>
+            </div>
+            
+            <!-- Points Summary - Show even without streak -->
+            <div th:if="${dashboard.userPoints != null and dashboard.userPoints.currentStreak == 0}" 
+                 class="streak-banner fade-in" style="animation-delay: 0.1s;">
+                <span class="streak-icon">⭐</span>
+                <div class="streak-content">
+                    <div class="streak-title" th:text="${dashboard.userPoints.totalPoints} + ' Points'">0 Points</div>
+                    <div class="streak-subtitle">Start logging your mood daily to build a streak!</div>
+                </div>
+                <a th:href="@{/student/leaderboard}" class="btn btn-sm btn-secondary">View Stats</a>
+            </div>
+            
+            <!-- Nudges -->
+            <div th:if="${not #lists.isEmpty(dashboard.activeNudges)}" class="fade-in" style="animation-delay: 0.15s; margin-bottom: 24px;">
+                <div th:each="nudge : ${dashboard.activeNudges}" class="nudge-card">
+                    <span class="nudge-icon">💡</span>
+                    <div class="nudge-content">
+                        <p class="nudge-message" th:text="${nudge.message}">Nudge message</p>
+                    </div>
+                    <div class="nudge-actions">
+                        <a th:if="${nudge.actionUrl}" th:href="${nudge.actionUrl}" 
+                           class="btn btn-sm btn-primary" th:text="${nudge.actionLabel}">Action</a>
+                        <form th:action="@{/student/nudges/{id}/dismiss(id=${nudge.id})}" method="post" style="margin: 0;">
+                            <button type="submit" class="btn btn-sm btn-ghost">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-4 card-grid" style="margin-bottom: 24px;">
+                <!-- Latest Assessment Card -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-clipboard2-check"></i>
+                            Latest Assessment
+                        </span>
+                        <a th:href="@{/student/assessment}" class="btn btn-sm btn-outline">Take New</a>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${dashboard.latestAssessment != null}">
+                            <div class="d-flex align-center justify-between" style="margin-bottom: 16px;">
+                                <span class="badge" th:classappend="'severity-' + ${dashboard.latestAssessment.severity}" 
+                                      th:text="${dashboard.latestAssessment.severity}">MILD</span>
+                                <span class="text-muted" style="font-size: 0.85rem;"
+                                      th:text="${#temporals.format(dashboard.latestAssessment.completedAt, 'MMM dd, yyyy')}">Dec 28, 2025</span>
+                            </div>
+                            <div class="d-flex align-center gap-3">
+                                <!-- Assessment Ring -->
+                                <div class="assessment-ring">
+                                    <svg width="100" height="100" viewBox="0 0 100 100">
+                                        <defs>
+                                            <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:var(--accent)" />
+                                                <stop offset="100%" style="stop-color:var(--accent-light)" />
+                                            </linearGradient>
+                                        </defs>
+                                        <circle class="assessment-ring-bg" cx="50" cy="50" r="42" />
+                                        <circle class="assessment-ring-fill" cx="50" cy="50" r="42" 
+                                                th:attr="stroke-dasharray='264', stroke-dashoffset=${264 - (dashboard.latestAssessment.totalScore / dashboard.latestAssessment.definition.maxScore * 264)}" />
+                                    </svg>
+                                    <div class="assessment-ring-text">
+                                        <div class="assessment-ring-value" th:text="${dashboard.latestAssessment.totalScore}">8</div>
+                                        <div class="assessment-ring-label" th:text="'of ' + ${dashboard.latestAssessment.definition.maxScore}">of 27</div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p style="margin-bottom: 4px; color: var(--text);" th:text="${dashboard.latestAssessment.definition.name} + ' Score'">PHQ-9 Score</p>
+                                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+                                        Your symptoms are manageable. Keep monitoring.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:unless="${dashboard.latestAssessment != null}" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">No assessment yet</div>
+                            <div class="empty-state-description">Take your first assessment to understand your wellbeing.</div>
+                            <a th:href="@{/student/assessment}" class="btn btn-primary">Take Assessment</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mood Trend Card -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-emoji-smile"></i>
+                            Mood (Last 7 Days)
+                        </span>
+                        <a th:href="@{/student/mood}" class="btn btn-sm btn-outline">Log Mood</a>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${not #lists.isEmpty(dashboard.recentMoodLogs)}">
+                            <div class="d-flex align-center justify-between" style="margin-bottom: 20px;">
+                                <div class="mood-avg">
+                                    <span class="mood-avg-value" th:if="${dashboard.averageMood != null}" 
+                                          th:text="${#numbers.formatDecimal(dashboard.averageMood, 1, 1)}">3.2</span>
+                                    <span class="mood-avg-label">/5 avg</span>
+                                </div>
+                                <div th:class="'mood-trend ' + ${dashboard.moodTrend == 'IMPROVING' ? 'up' : (dashboard.moodTrend == 'DECLINING' ? 'down' : 'stable')}">
+                                    <span th:text="${dashboard.moodTrendIcon}">→</span>
+                                    <span th:text="${dashboard.moodTrend}">STABLE</span>
+                                </div>
+                            </div>
+                            <div class="mood-grid">
+                                <div th:each="mood : ${dashboard.recentMoodLogs}" class="mood-day">
+                                    <span class="mood-emoji" th:text="${mood.moodEmoji}">😊</span>
+                                    <span class="mood-label" th:text="${#temporals.format(mood.createdAt, 'EEE')}">Mon</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:unless="${not #lists.isEmpty(dashboard.recentMoodLogs)}" class="empty-state">
+                            <div class="empty-state-icon">📈</div>
+                            <div class="empty-state-title">Start tracking your mood</div>
+                            <div class="empty-state-description">Log how you feel to see patterns over time.</div>
+                            <a th:href="@{/student/mood}" class="btn btn-primary">Log Your Mood</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Appointments Card -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-calendar-check"></i>
+                            Upcoming Appointments
+                        </span>
+                        <a th:href="@{/student/appointments}" class="btn btn-sm btn-outline">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${not #lists.isEmpty(dashboard.upcomingAppointments)}">
+                            <div th:each="apt, iter : ${dashboard.upcomingAppointments}" th:if="${iter.index < 2}" 
+                                 class="appointment-item">
+                                <div class="appointment-avatar">
+                                    <span th:text="${#strings.substring(apt.counsellor.displayName, 0, 1)}">D</span>
+                                </div>
+                                <div class="appointment-info">
+                                    <div class="appointment-name" th:text="${apt.counsellor.displayName}">Dr. Sarah Chen</div>
+                                    <div class="appointment-time" th:text="${#temporals.format(apt.startAt, 'MMM dd, HH:mm')}">Jan 14, 10:00</div>
+                                </div>
+                                <span class="appointment-status" th:classappend="'status-' + ${apt.status}" 
+                                      th:text="${apt.status}">SCHEDULED</span>
+                            </div>
+                        </div>
+                        <div th:unless="${not #lists.isEmpty(dashboard.upcomingAppointments)}" class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <div class="empty-state-title">No upcoming appointments</div>
+                            <div class="empty-state-description">Book a session with a counsellor for support.</div>
+                            <a th:href="@{/student/appointments}" class="btn btn-primary">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions Card -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-lightning"></i>
+                            Quick Actions
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a th:href="@{/student/ai-coach}" class="quick-action-btn">
+                                <i class="bi bi-chat-heart"></i>
+                                <span>Talk to AI Coach</span>
+                            </a>
+                            <a th:href="@{/student/modules}" class="quick-action-btn">
+                                <i class="bi bi-book"></i>
+                                <span>Explore Learning Modules</span>
+                                <span class="quick-action-badge" th:text="${dashboard.availableModuleCount}">2</span>
+                            </a>
+                            <a th:href="@{/student/care-plan}" class="quick-action-btn">
+                                <i class="bi bi-heart-pulse"></i>
+                                <span>View Care Plan</span>
+                            </a>
+                            <a th:href="@{/forum}" class="quick-action-btn">
+                                <i class="bi bi-people"></i>
+                                <span>Join Community Forum</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    
+    <!-- Mobile Menu Drawer -->
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('AI Coach')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside th:replace="~{fragments/layout :: sidebar-student}"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>💬</span>
+                    AI Coach
+                </h1>
+                <p class="page-subtitle">Talk to Mochi, your wellness companion</p>
+            </div>
+            
+            <style>
+                .chat-container {
+                    height: 450px;
+                    overflow-y: auto;
+                    margin-bottom: 16px;
+                    padding: 16px;
+                    background: var(--surface-2);
+                    border-radius: 16px;
+                }
+                
+                .chat-message {
+                    display: flex;
+                    margin-bottom: 16px;
+                    animation: messageIn 0.3s ease;
+                }
+                
+                @keyframes messageIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                .chat-message.bot {
+                    justify-content: flex-start;
+                }
+                
+                .chat-message.user {
+                    justify-content: flex-end;
+                }
+                
+                .chat-message-content {
+                    max-width: 80%;
+                    padding: 14px 18px;
+                    border-radius: 18px;
+                    font-size: 0.95rem;
+                    line-height: 1.5;
+                }
+                
+                .chat-message.bot .chat-message-content {
+                    background: #ffffff;
+                    color: #1a1a2e;
+                    border: 1px solid rgba(0,0,0,0.08);
+                    border-bottom-left-radius: 4px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                }
+                
+                .chat-message.user .chat-message-content {
+                    background: linear-gradient(135deg, #7c5dfa, #9f7aea);
+                    color: #ffffff !important;
+                    border-bottom-right-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(124, 93, 250, 0.3);
+                }
+                
+                .chat-message.user .chat-message-content p {
+                    color: #ffffff !important;
+                }
+                
+                [data-theme="dark"] .chat-message.bot .chat-message-content {
+                    background: #2a2a3e;
+                    color: #e0e0e0;
+                    border-color: rgba(255,255,255,0.1);
+                }
+                
+                [data-theme="dark"] .chat-message.user .chat-message-content {
+                    color: #ffffff !important;
+                }
+                
+                .chat-input-container {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                }
+                
+                .chat-input {
+                    flex: 1;
+                    padding: 14px 20px;
+                    border: 1px solid var(--border);
+                    border-radius: 25px;
+                    background: var(--surface);
+                    color: var(--text);
+                    font-size: 0.95rem;
+                    outline: none;
+                    transition: all 0.2s ease;
+                }
+                
+                .chat-input:focus {
+                    border-color: var(--accent);
+                    box-shadow: 0 0 0 3px rgba(124, 93, 250, 0.1);
+                }
+                
+                .chat-send-btn {
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #7c5dfa, #9f7aea);
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.1rem;
+                    transition: all 0.2s ease;
+                    flex-shrink: 0;
+                }
+                
+                .chat-send-btn:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 4px 12px rgba(124, 93, 250, 0.4);
+                }
+                
+                .chat-send-btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+                
+                .typing-indicator {
+                    display: flex;
+                    gap: 4px;
+                    padding: 14px 18px;
+                    background: #ffffff;
+                    border-radius: 18px;
+                    border-bottom-left-radius: 4px;
+                    border: 1px solid rgba(0,0,0,0.08);
+                    max-width: fit-content;
+                }
+                
+                [data-theme="dark"] .typing-indicator {
+                    background: #2a2a3e;
+                    border-color: rgba(255,255,255,0.1);
+                }
+                
+                .typing-indicator span {
+                    width: 8px;
+                    height: 8px;
+                    background: #7c5dfa;
+                    border-radius: 50%;
+                    animation: bounce 1.4s infinite ease-in-out both;
+                }
+                
+                .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+                .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+                .typing-indicator span:nth-child(3) { animation-delay: 0s; }
+                
+                @keyframes bounce {
+                    0%, 80%, 100% {
+                        transform: scale(0);
+                    }
+                    40% {
+                        transform: scale(1);
+                    }
+                }
+            </style>
+            
+            <div class="ai-coach-grid">
+                <!-- Chat Area -->
+                <div class="card fade-in" style="animation-delay: 0.1s;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #fef3c7, #fde68a); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                                    🐱
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600;">Mochi</div>
+                                    <div style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px;">
+                                        <span id="status-dot" style="width: 6px; height: 6px; border-radius: 50%;" th:style="${aiEnabled} ? 'background: #10b981;' : 'background: #f59e0b;'"></span>
+                                        <span id="status-text" th:text="${aiEnabled} ? 'AI Powered' : 'Basic Mode'" style="color: var(--text-muted);">Basic Mode</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Chat Container -->
+                        <div id="chat-container" class="chat-container">
+                            <!-- Welcome Message -->
+                            <div class="chat-message bot">
+                                <div class="chat-message-content">
+                                    <p style="margin-bottom: 8px;">Hi there! 👋 I'm Mochi, your wellness companion.</p>
+                                    <p style="margin: 0;">I'm here to listen and support you. How are you feeling today?</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Existing Messages -->
+                            <div th:each="msg : ${history}">
+                                <div th:class="'chat-message ' + (${msg.sender.name() == 'BOT'} ? 'bot' : 'user')">
+                                    <div class="chat-message-content">
+                                        <p style="margin: 0;" th:text="${msg.message}">Message content</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Chat Input -->
+                        <div class="chat-input-container">
+                            <input type="hidden" id="sessionId" th:value="${sessionId}">
+                            <input type="hidden" id="csrfToken" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="text" id="messageInput" class="chat-input" 
+                                   placeholder="Type your message..." autocomplete="off">
+                            <button type="button" id="sendBtn" class="chat-send-btn" onclick="sendMessage()">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar Panel -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Quick Topics -->
+                    <div class="card fade-in" style="animation-delay: 0.2s;">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <i class="bi bi-chat-dots"></i>
+                                Quick Topics
+                            </span>
+                        </div>
+                        <div class="card-body" style="display: flex; flex-direction: column; gap: 8px;">
+                            <button type="button" class="quick-action-btn" onclick="suggestTopic('I\'m feeling stressed about exams')">
+                                📚 Exam stress
+                            </button>
+                            <button type="button" class="quick-action-btn" onclick="suggestTopic('I\'m having trouble sleeping')">
+                                😴 Sleep issues
+                            </button>
+                            <button type="button" class="quick-action-btn" onclick="suggestTopic('I feel anxious today')">
+                                😰 Feeling anxious
+                            </button>
+                            <button type="button" class="quick-action-btn" onclick="suggestTopic('I want to improve my mood')">
+                                🌈 Improve mood
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Mochi's Tips -->
+                    <div class="card fade-in" style="animation-delay: 0.3s;">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <i class="bi bi-lightbulb"></i>
+                                Mochi's Tips
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.03)); border-radius: 14px; padding: 16px;">
+                                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                    <span style="font-size: 1.5rem;">💡</span>
+                                    <div>
+                                        <p style="font-weight: 600; color: var(--text); margin-bottom: 4px;">Tip of the Day</p>
+                                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">
+                                            Try the 4-7-8 breathing technique: Inhale for 4 seconds, hold for 7, exhale for 8.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Resources -->
+                    <div class="card fade-in" style="animation-delay: 0.4s;">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <i class="bi bi-bookmark"></i>
+                                Helpful Resources
+                            </span>
+                        </div>
+                        <div class="card-body" style="display: flex; flex-direction: column; gap: 8px;">
+                            <a th:href="@{/student/assessment}" class="quick-action-btn">
+                                <i class="bi bi-clipboard2-check"></i>
+                                Take Self-Assessment
+                            </a>
+                            <a th:href="@{/student/appointments}" class="quick-action-btn">
+                                <i class="bi bi-calendar-check"></i>
+                                Book Counselling
+                            </a>
+                            <a th:href="@{/student/modules}" class="quick-action-btn">
+                                <i class="bi bi-book"></i>
+                                Learning Modules
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const sessionId = document.getElementById('sessionId').value;
+        const csrfToken = document.getElementById('csrfToken').value;
+        
+        // Auto-scroll to bottom of chat
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Add message to chat
+        function addMessage(text, isUser) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message ' + (isUser ? 'user' : 'bot');
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'chat-message-content';
+            
+            const p = document.createElement('p');
+            p.style.margin = '0';
+            p.textContent = text;
+            
+            contentDiv.appendChild(p);
+            msgDiv.appendChild(contentDiv);
+            chatContainer.appendChild(msgDiv);
+            
+            scrollToBottom();
+        }
+        
+        // Show typing indicator
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'chat-message bot';
+            typingDiv.innerHTML = `
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+        
+        // Hide typing indicator
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+        
+        // Send message via AJAX
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Disable input while sending
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+            
+            // Add user message to chat
+            addMessage(message, true);
+            messageInput.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            try {
+                const formData = new FormData();
+                formData.append('sessionId', sessionId);
+                formData.append('message', message);
+                formData.append('_csrf', csrfToken);
+                
+                const response = await fetch('/student/ai-coach/send-ajax', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    hideTyping();
+                    addMessage(data.response, false);
+                } else {
+                    hideTyping();
+                    addMessage("Sorry, I'm having trouble responding right now. Please try again.", false);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                hideTyping();
+                addMessage("Sorry, something went wrong. Please try again.", false);
+            }
+            
+            // Re-enable input
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+        
+        // Suggest topic
+        function suggestTopic(topic) {
+            messageInput.value = topic;
+            messageInput.focus();
+        }
+        
+        // Send on Enter key
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            scrollToBottom();
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>

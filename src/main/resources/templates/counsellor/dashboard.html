@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Counsellor Dashboard')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-counsellor}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>👋</span>
+                    Welcome, <span th:text="${user.displayName}">Dr. Chen</span>
+                </h1>
+                <p class="page-subtitle">Here's your overview for today</p>
+            </div>
+            
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15), rgba(var(--accent-rgb), 0.05));">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="stat-value" th:text="${todayAppointments}">3</div>
+                    <div class="stat-label">Today's Appointments</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.15), rgba(var(--accent-2-rgb), 0.05));">
+                        <i class="bi bi-people" style="color: var(--accent-2);"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-2), #a8d5ba); -webkit-background-clip: text;" 
+                         th:text="${pendingReferrals}">2</div>
+                    <div class="stat-label">Pending Referrals</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(var(--accent-3-rgb), 0.15), rgba(var(--accent-3-rgb), 0.05));">
+                        <i class="bi bi-flag" style="color: var(--accent-3);"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-3), #f4a58a); -webkit-background-clip: text;" 
+                         th:text="${pendingReports}">1</div>
+                    <div class="stat-label">Pending Reports</div>
+                </div>
+                
+                <div class="card stat-card hover-lift">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.05));">
+                        <i class="bi bi-person-check" style="color: #b45309;"></i>
+                    </div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, #fbbf24, #fcd34d); -webkit-background-clip: text;" 
+                         th:text="${totalStudents}">15</div>
+                    <div class="stat-label">Active Students</div>
+                </div>
+            </div>
+            
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-2 gap-4 card-grid">
+                <!-- Today's Schedule -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-calendar-day"></i>
+                            Today's Schedule
+                        </span>
+                        <a th:href="@{/counsellor/appointments}" class="btn btn-sm btn-outline">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${not #lists.isEmpty(todaySchedule)}" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div th:each="apt : ${todaySchedule}" class="appointment-item">
+                                <div class="appointment-avatar">
+                                    <span th:text="${#strings.substring(apt.student.displayName, 0, 1)}">A</span>
+                                </div>
+                                <div class="appointment-info">
+                                    <div class="appointment-name" th:text="${apt.student.displayName}">Alice Johnson</div>
+                                    <div class="appointment-time" th:text="${#temporals.format(apt.startAt, 'HH:mm')} + ' - ' + ${#temporals.format(apt.endAt, 'HH:mm')}">10:00 - 11:00</div>
+                                </div>
+                                <a th:href="@{/counsellor/appointments/{id}(id=${apt.id})}" class="btn btn-sm btn-primary">View</a>
+                            </div>
+                        </div>
+                        <div th:unless="${not #lists.isEmpty(todaySchedule)}" class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <div class="empty-state-title">No appointments today</div>
+                            <div class="empty-state-description">Enjoy your free day!</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Referrals -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-person-lines-fill"></i>
+                            Recent Referrals
+                        </span>
+                        <a th:href="@{/counsellor/referrals}" class="btn btn-sm btn-outline">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${not #lists.isEmpty(recentReferrals)}" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div th:each="ref, iter : ${recentReferrals}" th:if="${iter.index < 3}" 
+                                 style="padding: 14px; background: var(--surface-2); border-radius: 14px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <div>
+                                        <span style="font-weight: 600; color: var(--text);" th:text="${ref.studentIdentifier}">student@example.com</span>
+                                        <span class="badge" th:classappend="${ref.urgency == 'HIGH' ? 'badge-danger' : (ref.urgency == 'MEDIUM' ? 'badge-warning' : 'badge-success')}"
+                                              th:text="${ref.urgency}" style="margin-left: 8px;">MEDIUM</span>
+                                    </div>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);" 
+                                          th:text="${#temporals.format(ref.createdAt, 'MMM dd')}">Jan 10</span>
+                                </div>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;"
+                                   th:text="${#strings.abbreviate(ref.summary, 80)}">Concern summary...</p>
+                            </div>
+                        </div>
+                        <div th:unless="${not #lists.isEmpty(recentReferrals)}" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div class="empty-state-title">No pending referrals</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="card hover-lift" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-lightning"></i>
+                            Quick Actions
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions-grid">
+                            <a th:href="@{/counsellor/appointments}" class="quick-action-btn">
+                                <i class="bi bi-calendar-plus"></i>
+                                <span>View Schedule</span>
+                            </a>
+                            <a th:href="@{/counsellor/referrals}" class="quick-action-btn">
+                                <i class="bi bi-person-lines-fill"></i>
+                                <span>Referrals</span>
+                            </a>
+                            <a th:href="@{/moderation}" class="quick-action-btn">
+                                <i class="bi bi-shield-check"></i>
+                                <span>Moderation</span>
+                            </a>
+                            <a th:href="@{/forum}" class="quick-action-btn">
+                                <i class="bi bi-people"></i>
+                                <span>Forum</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-counsellor}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-counsellor}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

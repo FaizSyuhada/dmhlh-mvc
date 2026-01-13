@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Profile - Solace')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-layout">
+        <!-- Sidebar - dynamic based on role -->
+        <aside sec:authorize="hasRole('STUDENT')" th:replace="~{fragments/layout :: sidebar-student}"></aside>
+        <aside sec:authorize="hasRole('COUNSELLOR')" th:replace="~{fragments/layout :: sidebar-counsellor}"></aside>
+        <aside sec:authorize="hasRole('FACULTY')" th:replace="~{fragments/layout :: sidebar-faculty}"></aside>
+        <aside sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/layout :: sidebar-admin}"></aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title"><span>👤</span> My Profile</h1>
+                <p class="page-subtitle">Manage your account settings and privacy preferences</p>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div th:if="${success}" class="alert alert-success fade-in" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3);">
+                <span>✅</span>
+                <span th:text="${success}">Success</span>
+            </div>
+            <div th:if="${error}" class="alert alert-error fade-in" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(229, 115, 115, 0.15); border: 1px solid rgba(229, 115, 115, 0.3);">
+                <span>❌</span>
+                <span th:text="${error}">Error</span>
+            </div>
+            <div th:if="${warning}" class="alert alert-warning fade-in" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(255, 183, 77, 0.15); border: 1px solid rgba(255, 183, 77, 0.3);">
+                <span>⚠️</span>
+                <span th:text="${warning}">Warning</span>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="profile-tabs" style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 0;">
+                <a th:href="@{/profile}" 
+                   th:class="${activeTab == 'profile'} ? 'tab-btn active' : 'tab-btn'"
+                   style="padding: 12px 24px; text-decoration: none; border-radius: 8px 8px 0 0; font-weight: 500;">
+                    <span>👤</span> Profile
+                </a>
+                <a th:href="@{/profile/settings}" 
+                   th:class="${activeTab == 'settings'} ? 'tab-btn active' : 'tab-btn'"
+                   style="padding: 12px 24px; text-decoration: none; border-radius: 8px 8px 0 0; font-weight: 500;">
+                    <span>⚙️</span> Settings
+                </a>
+                <a th:href="@{/profile/consent}" 
+                   th:class="${activeTab == 'consent'} ? 'tab-btn active' : 'tab-btn'"
+                   style="padding: 12px 24px; text-decoration: none; border-radius: 8px 8px 0 0; font-weight: 500;">
+                    <span>🔒</span> Privacy & Consent
+                </a>
+            </div>
+            
+            <!-- Profile Tab -->
+            <div th:if="${activeTab == 'profile'}" class="profile-content fade-in">
+                <div class="card hover-lift" style="background: var(--card-bg); border-radius: var(--border-radius); padding: 32px; margin-bottom: 24px;">
+                    <div class="card-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                            <span>📝</span> Personal Information
+                        </h3>
+                    </div>
+                    
+                    <form th:action="@{/profile/update}" method="post">
+                        <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Display Name *</label>
+                                <input type="text" name="displayName" class="form-control" 
+                                       th:value="${user.displayName}" required
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" th:value="${user.email}" disabled
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); cursor: not-allowed;">
+                                <small style="color: var(--text-muted); margin-top: 4px; display: block;">Email cannot be changed</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" name="phoneNumber" class="form-control" 
+                                       th:value="${user.phoneNumber}" placeholder="+60 123 456 789"
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Student ID</label>
+                                <input type="text" name="studentId" class="form-control" 
+                                       th:value="${user.studentId}" placeholder="e.g., S12345678"
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Faculty / Department</label>
+                                <input type="text" name="faculty" class="form-control" 
+                                       th:value="${user.faculty}" placeholder="e.g., Faculty of Computing"
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                            
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Bio</label>
+                                <textarea name="bio" class="form-control" rows="4" 
+                                          placeholder="Tell us a little about yourself..."
+                                          style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); resize: vertical;"
+                                          th:text="${user.bio}"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+                                <span>💾</span> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Account Info Card -->
+                <div class="card hover-lift" style="background: var(--card-bg); border-radius: var(--border-radius); padding: 32px;">
+                    <div class="card-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                            <span>📊</span> Account Information
+                        </h3>
+                    </div>
+                    
+                    <div class="info-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                        <div class="info-item" style="padding: 16px; background: var(--bg-secondary); border-radius: 12px; text-align: center;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 4px;">Role</div>
+                            <div style="font-weight: 600; color: var(--accent);" th:text="${user.role}">STUDENT</div>
+                        </div>
+                        <div class="info-item" style="padding: 16px; background: var(--bg-secondary); border-radius: 12px; text-align: center;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 4px;">Member Since</div>
+                            <div style="font-weight: 600;" th:text="${#temporals.format(user.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</div>
+                        </div>
+                        <div class="info-item" style="padding: 16px; background: var(--bg-secondary); border-radius: 12px; text-align: center;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 4px;">Account Status</div>
+                            <div style="font-weight: 600; color: var(--accent-2);" th:if="${user.enabled}">✅ Active</div>
+                            <div style="font-weight: 600; color: var(--danger);" th:unless="${user.enabled}">❌ Disabled</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div th:if="${activeTab == 'settings'}" class="settings-content fade-in">
+                <!-- Notification Settings -->
+                <div class="card hover-lift" style="background: var(--card-bg); border-radius: var(--border-radius); padding: 32px; margin-bottom: 24px;">
+                    <div class="card-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                            <span>🔔</span> Notification Preferences
+                        </h3>
+                    </div>
+                    
+                    <form th:action="@{/profile/notifications}" method="post">
+                        <div class="settings-list" style="display: flex; flex-direction: column; gap: 16px;">
+                            <label class="setting-item" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <div>
+                                    <div style="font-weight: 500;">📧 Email Notifications</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted);">Receive updates about your account and activities</div>
+                                </div>
+                                <input type="checkbox" name="emailNotifications" th:checked="${user.notificationEmail}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent);">
+                            </label>
+                            
+                            <label class="setting-item" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <div>
+                                    <div style="font-weight: 500;">📅 Appointment Reminders</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted);">Get notified before your scheduled appointments</div>
+                                </div>
+                                <input type="checkbox" name="appointmentNotifications" th:checked="${user.notificationAppointment}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent);">
+                            </label>
+                        </div>
+                        
+                        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+                                <span>💾</span> Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="card hover-lift" style="background: var(--card-bg); border-radius: var(--border-radius); padding: 32px;">
+                    <div class="card-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                            <span>🔑</span> Change Password
+                        </h3>
+                    </div>
+                    
+                    <form th:action="@{/profile/change-password}" method="post">
+                        <div class="form-grid" style="display: grid; gap: 20px; max-width: 400px;">
+                            <div class="form-group">
+                                <label class="form-label">Current Password *</label>
+                                <input type="password" name="currentPassword" class="form-control" required
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">New Password *</label>
+                                <input type="password" name="newPassword" class="form-control" required minlength="8"
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                                <small style="color: var(--text-muted); margin-top: 4px; display: block;">Minimum 8 characters</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Confirm New Password *</label>
+                                <input type="password" name="confirmPassword" class="form-control" required minlength="8"
+                                       style="width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary);">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 24px;">
+                            <button type="submit" class="btn btn-secondary" style="padding: 12px 32px;">
+                                <span>🔑</span> Update Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Consent Tab -->
+            <div th:if="${activeTab == 'consent'}" class="consent-content fade-in">
+                <!-- Privacy Overview -->
+                <div class="card hover-lift" style="background: var(--card-bg); border-radius: var(--border-radius); padding: 32px; margin-bottom: 24px;">
+                    <div class="card-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                            <span>🔒</span> Privacy & Data Consent
+                        </h3>
+                    </div>
+                    
+                    <div class="privacy-info" style="background: linear-gradient(135deg, rgba(107, 169, 224, 0.1), rgba(156, 136, 255, 0.1)); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                        <p style="margin: 0; line-height: 1.6;">
+                            <strong>🛡️ Your Privacy Matters:</strong> Solace is committed to protecting your personal data. 
+                            Below you can manage how your information is collected and used. All data is stored securely 
+                            and is never shared with third parties without your explicit consent.
+                        </p>
+                    </div>
+                    
+                    <!-- Consent Status -->
+                    <div th:if="${consent != null}" class="consent-status" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 24px;">
+                        <div th:if="${consent.accepted and consent.withdrawnAt == null}" style="color: var(--accent-2);">
+                            <span style="font-size: 1.5rem;">✅</span>
+                        </div>
+                        <div th:if="${!consent.accepted or consent.withdrawnAt != null}" style="color: var(--warning);">
+                            <span style="font-size: 1.5rem;">⚠️</span>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600;" th:if="${consent.accepted and consent.withdrawnAt == null}">Consent Active</div>
+                            <div style="font-weight: 600;" th:if="${!consent.accepted or consent.withdrawnAt != null}">Consent Withdrawn / Not Given</div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted);" th:if="${consent.acceptedAt != null}">
+                                Last updated: <span th:text="${#temporals.format(consent.updatedAt != null ? consent.updatedAt : consent.acceptedAt, 'MMM dd, yyyy HH:mm')}">Date</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form th:action="@{/profile/consent/update}" method="post">
+                        <h4 style="margin-bottom: 16px; font-size: 1rem; color: var(--text-muted);">Data Collection Preferences</h4>
+                        
+                        <div class="consent-options" style="display: flex; flex-direction: column; gap: 16px;">
+                            <label class="consent-item" style="display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <input type="checkbox" name="moodTracking" th:checked="${consent != null ? consent.consentMoodTracking : true}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px;">
+                                <div>
+                                    <div style="font-weight: 500;">📊 Mood Tracking Data</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">
+                                        Allow collection of your mood journal entries to track mental health patterns and provide personalized insights.
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="consent-item" style="display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <input type="checkbox" name="assessmentData" th:checked="${consent != null ? consent.consentAssessmentData : true}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px;">
+                                <div>
+                                    <div style="font-weight: 500;">📋 Assessment Results</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">
+                                        Store your self-assessment results (PHQ-9, GAD-7, etc.) to monitor progress and recommend appropriate support.
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="consent-item" style="display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <input type="checkbox" name="appointmentHistory" th:checked="${consent != null ? consent.consentAppointmentHistory : true}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px;">
+                                <div>
+                                    <div style="font-weight: 500;">📅 Appointment History</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">
+                                        Keep records of your counselling appointments for continuity of care and scheduling purposes.
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="consent-item" style="display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <input type="checkbox" name="aiCoach" th:checked="${consent != null ? consent.consentAiCoach : true}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px;">
+                                <div>
+                                    <div style="font-weight: 500;">🤖 AI Coach Conversations</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">
+                                        Store AI coach chat history to provide contextual support and improve recommendations.
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="consent-item" style="display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer;">
+                                <input type="checkbox" name="anonymousAnalytics" th:checked="${consent != null ? consent.consentAnonymousAnalytics : true}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px;">
+                                <div>
+                                    <div style="font-weight: 500;">📈 Anonymous Analytics</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">
+                                        Contribute anonymized data to help improve our mental health services (no personal information shared).
+                                    </div>
+                                </div>
+                            </label>
+                            
+                            <label class="consent-item" style="display: flex; align-items: flex-start; gap: 16px; padding: 20px; background: var(--bg-secondary); border-radius: 12px; cursor: pointer; border: 2px solid var(--warning);">
+                                <input type="checkbox" name="facultyReferral" th:checked="${consent != null and consent.consentFacultyReferral}"
+                                       style="width: 20px; height: 20px; accent-color: var(--accent); margin-top: 2px;">
+                                <div>
+                                    <div style="font-weight: 500;">👨‍🏫 Faculty Referral Access</div>
+                                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">
+                                        <strong>Optional:</strong> Allow faculty members to view limited information if they submit a concern referral about you.
+                                        This helps faculty support students who may need assistance.
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                            <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+                                <span>💾</span> Save Consent Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Withdraw Consent -->
+                <div class="card hover-lift" style="background: var(--card-bg); border-radius: var(--border-radius); padding: 32px; border: 2px solid rgba(229, 115, 115, 0.3);">
+                    <div class="card-header" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 12px; color: var(--danger);">
+                            <span>⚠️</span> Withdraw Consent
+                        </h3>
+                    </div>
+                    
+                    <div style="background: rgba(229, 115, 115, 0.1); padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+                        <p style="margin: 0; line-height: 1.6; color: var(--text-primary);">
+                            <strong>Warning:</strong> Withdrawing your consent will disable data collection for all features. 
+                            You will still be able to access learning modules, but personalized features like mood tracking, 
+                            assessments, and AI coaching will be limited. Your existing data will be retained but not processed.
+                        </p>
+                    </div>
+                    
+                    <form th:action="@{/profile/consent/withdraw}" method="post" 
+                          onsubmit="return confirm('Are you sure you want to withdraw your consent? This will limit your access to personalized features.');">
+                        <button type="submit" class="btn" style="padding: 12px 32px; background: var(--danger); color: white; border: none; border-radius: 8px;">
+                            <span>🚫</span> Withdraw All Consent
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer class="page-footer fade-in">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </footer>
+        </main>
+    </div>
+    
+    <style>
+        .tab-btn {
+            color: var(--text-muted);
+            background: transparent;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            background: var(--bg-secondary);
+            border-bottom: 3px solid var(--accent);
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(107, 169, 224, 0.2);
+        }
+        
+        .consent-item:hover {
+            background: var(--bg-tertiary) !important;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .form-grid .form-group[style*="grid-column: span 2"] {
+                grid-column: span 1 !important;
+            }
+            .info-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .profile-tabs {
+                flex-wrap: wrap;
+            }
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</body>
+</html>

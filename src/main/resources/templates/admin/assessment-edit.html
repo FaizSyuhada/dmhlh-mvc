@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Edit Assessment - Admin')}"></head>
+<body>
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <nav class="breadcrumb">
+                    <a th:href="@{/admin/assessments}">Assessments</a>
+                    <span>/</span>
+                    <span th:text="${assessment.code}">PHQ9</span>
+                </nav>
+                <h1 class="page-title">
+                    <span>✏️</span> Edit Assessment
+                </h1>
+                <p class="page-subtitle">Modify assessment settings and scoring</p>
+            </div>
+            
+            <div class="card hover-lift fade-in" style="animation-delay: 0.1s; max-width: 800px;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="bi bi-pencil-square"></i>
+                        Assessment Details
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/assessments/{id}/update(id=${assessment.id})}" method="post">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Code</label>
+                                <input type="text" class="form-control" 
+                                       th:value="${assessment.code}" disabled
+                                       style="background: var(--bg-secondary); cursor: not-allowed;">
+                                <small class="form-hint">Code cannot be changed</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Name *</label>
+                                <input type="text" name="name" class="form-control" 
+                                       th:value="${assessment.name}"
+                                       placeholder="e.g., Patient Health Questionnaire" required>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" class="form-control" rows="3"
+                                          th:text="${assessment.description}"
+                                          placeholder="Brief description of what this assessment measures..."></textarea>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label class="form-label">Instructions</label>
+                                <textarea name="instructions" class="form-control" rows="3"
+                                          th:text="${assessment.instructions}"
+                                          placeholder="Instructions shown to users before taking the assessment..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Max Score</label>
+                                <input type="number" name="maxScore" class="form-control" 
+                                       th:value="${assessment.maxScore}"
+                                       placeholder="e.g., 27" min="1">
+                                <small class="form-hint">Maximum possible score (auto-calculated from questions if left empty)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div class="form-check">
+                                    <input type="checkbox" name="active" id="active" 
+                                           th:checked="${assessment.active}" class="form-check-input">
+                                    <label for="active" class="form-check-label">Active (visible to users)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <a th:href="@{/admin/assessments}" class="btn btn-outline">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Score Interpretation Section -->
+            <div class="card hover-lift fade-in" style="animation-delay: 0.2s; max-width: 800px; margin-top: 24px;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="bi bi-bar-chart"></i>
+                        Score Interpretation
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p style="color: var(--text-muted); margin-bottom: 20px;">
+                        Score interpretation is based on validated clinical guidelines. The severity levels below determine the feedback shown to users after completing the assessment.
+                    </p>
+                    
+                    <!-- PHQ9 Scoring -->
+                    <div th:if="${assessment.code == 'PHQ9'}">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Score Range</th>
+                                    <th>Severity Level</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>0 - 4</td>
+                                    <td><span class="severity-badge minimal">MINIMAL</span></td>
+                                    <td>Minimal depression</td>
+                                </tr>
+                                <tr>
+                                    <td>5 - 9</td>
+                                    <td><span class="severity-badge mild">MILD</span></td>
+                                    <td>Mild depression</td>
+                                </tr>
+                                <tr>
+                                    <td>10 - 14</td>
+                                    <td><span class="severity-badge moderate">MODERATE</span></td>
+                                    <td>Moderate depression</td>
+                                </tr>
+                                <tr>
+                                    <td>15 - 19</td>
+                                    <td><span class="severity-badge moderately_severe">MODERATELY SEVERE</span></td>
+                                    <td>Moderately severe depression</td>
+                                </tr>
+                                <tr>
+                                    <td>20 - 27</td>
+                                    <td><span class="severity-badge severe">SEVERE</span></td>
+                                    <td>Severe depression</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted);">
+                            ℹ️ Based on PHQ-9 validated clinical scoring guidelines
+                        </p>
+                    </div>
+                    
+                    <!-- GAD7 Scoring -->
+                    <div th:if="${assessment.code == 'GAD7'}">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Score Range</th>
+                                    <th>Severity Level</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>0 - 4</td>
+                                    <td><span class="severity-badge minimal">MINIMAL</span></td>
+                                    <td>Minimal anxiety</td>
+                                </tr>
+                                <tr>
+                                    <td>5 - 9</td>
+                                    <td><span class="severity-badge mild">MILD</span></td>
+                                    <td>Mild anxiety</td>
+                                </tr>
+                                <tr>
+                                    <td>10 - 14</td>
+                                    <td><span class="severity-badge moderate">MODERATE</span></td>
+                                    <td>Moderate anxiety</td>
+                                </tr>
+                                <tr>
+                                    <td>15 - 21</td>
+                                    <td><span class="severity-badge severe">SEVERE</span></td>
+                                    <td>Severe anxiety</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top: 12px; font-size: 0.85rem; color: var(--text-muted);">
+                            ℹ️ Based on GAD-7 validated clinical scoring guidelines
+                        </p>
+                    </div>
+                    
+                    <!-- Custom Assessment - Default scoring -->
+                    <div th:if="${assessment.code != 'PHQ9' and assessment.code != 'GAD7'}">
+                        <div class="alert-info" style="padding: 16px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <p style="margin: 0; color: var(--text-primary);">
+                                <strong>Custom Assessment</strong><br>
+                                This assessment uses PHQ-9 scoring thresholds by default. To customize scoring for this assessment, the scoring logic needs to be updated in the system configuration.
+                            </p>
+                        </div>
+                        <table class="data-table" style="margin-top: 16px;">
+                            <thead>
+                                <tr>
+                                    <th>Score Range</th>
+                                    <th>Severity Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>0 - 4</td>
+                                    <td><span class="severity-badge minimal">MINIMAL</span></td>
+                                </tr>
+                                <tr>
+                                    <td>5 - 9</td>
+                                    <td><span class="severity-badge mild">MILD</span></td>
+                                </tr>
+                                <tr>
+                                    <td>10 - 14</td>
+                                    <td><span class="severity-badge moderate">MODERATE</span></td>
+                                </tr>
+                                <tr>
+                                    <td>15 - 19</td>
+                                    <td><span class="severity-badge moderately_severe">MODERATELY SEVERE</span></td>
+                                </tr>
+                                <tr>
+                                    <td>20+</td>
+                                    <td><span class="severity-badge severe">SEVERE</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card hover-lift fade-in" style="animation-delay: 0.3s; max-width: 800px; margin-top: 24px;">
+                <div class="card-body" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <a th:href="@{/admin/assessments/{id}/questions(id=${assessment.id})}" class="btn btn-outline">
+                        <i class="bi bi-list-check"></i> Manage Questions
+                    </a>
+                    <a th:href="@{/admin/assessments}" class="btn btn-ghost">
+                        <i class="bi bi-arrow-left"></i> Back to Assessments
+                    </a>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .form-hint {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .severity-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .severity-badge.minimal {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+        
+        .severity-badge.mild {
+            background: rgba(234, 179, 8, 0.1);
+            color: #eab308;
+        }
+        
+        .severity-badge.moderate {
+            background: rgba(249, 115, 22, 0.1);
+            color: #f97316;
+        }
+        
+        .severity-badge.moderately_severe {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        
+        .severity-badge.severe {
+            background: rgba(220, 38, 38, 0.1);
+            color: #dc2626;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .data-table th {
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            padding: 0;
+            border: none;
+            border-radius: 16px;
+            background: var(--bg-card);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 90vw;
+        }
+        
+        .modal::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            padding: 0;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            line-height: 1;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-body .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+        }
+        
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</body>
+</html>

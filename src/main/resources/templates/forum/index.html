@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Community Forum')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-container">
+        <!-- Sidebar - Dynamic based on role -->
+        <div th:replace="${#authorization.expression('hasRole(''STUDENT'')')} ? ~{fragments/layout :: sidebar-student} : (${#authorization.expression('hasRole(''COUNSELLOR'')')} ? ~{fragments/layout :: sidebar-counsellor} : ~{fragments/layout :: sidebar-admin})"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="forum-layout">
+                <!-- Main Feed -->
+                <div class="forum-feed">
+                    <!-- Alert Messages -->
+                    <div th:if="${error}" class="alert alert-danger fade-in" style="margin-bottom: 16px; padding: 16px; border-radius: 12px; background: rgba(224, 122, 95, 0.15); border: 1px solid rgba(224, 122, 95, 0.3); color: #e07a5f;">
+                        <span>❌</span> <span th:text="${error}">Error message</span>
+                    </div>
+                    <div th:if="${success}" class="alert alert-success fade-in" style="margin-bottom: 16px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: #81b29a;">
+                        <span>✅</span> <span th:text="${success}">Success message</span>
+                    </div>
+                    <div th:if="${info}" class="alert alert-info fade-in" style="margin-bottom: 16px; padding: 16px; border-radius: 12px; background: rgba(124, 111, 174, 0.15); border: 1px solid rgba(124, 111, 174, 0.3); color: #7c6fae;">
+                        <span>ℹ️</span> <span th:text="${info}">Info message</span>
+                    </div>
+                    
+                    <!-- Compose Box -->
+                    <div class="compose-box fade-in">
+                        <div class="compose-avatar">
+                            <span>🎭</span>
+                        </div>
+                        <div class="compose-input" onclick="openComposeModal()">
+                            <span>What's on your mind?</span>
+                        </div>
+                        <button class="btn btn-primary compose-btn" onclick="openComposeModal()">
+                            Post
+                        </button>
+                    </div>
+                    
+                    <!-- Filter Tabs -->
+                    <div class="filter-tabs fade-in" style="animation-delay: 0.1s;">
+                        <a th:href="@{/forum(filter='hot')}" 
+                           class="filter-tab" 
+                           th:classappend="${currentFilter == 'hot' or currentFilter == null or currentFilter == ''} ? ' active' : ''">
+                            <span>🔥</span> Hot
+                        </a>
+                        <a th:href="@{/forum(filter='new')}" 
+                           class="filter-tab"
+                           th:classappend="${currentFilter == 'new'} ? ' active' : ''">
+                            <span>✨</span> New
+                        </a>
+                        <a th:href="@{/forum(filter='top')}" 
+                           class="filter-tab"
+                           th:classappend="${currentFilter == 'top'} ? ' active' : ''">
+                            <span>📈</span> Top
+                        </a>
+                        <a th:href="@{/forum(filter='bookmarked')}" 
+                           class="filter-tab"
+                           th:classappend="${currentFilter == 'bookmarked'} ? ' active' : ''">
+                            <span>🔖</span> Saved
+                        </a>
+                    </div>
+                    
+                    <!-- Thread Feed -->
+                    <div class="thread-feed" id="threadFeed">
+                        <div th:each="thread, iter : ${threads}" 
+                             class="thread-card fade-in" 
+                             th:style="'animation-delay: ' + ${iter.index * 0.05 + 0.15} + 's'"
+                             th:data-thread-id="${thread.id}">
+                            
+                            <!-- Thread Header -->
+                            <div class="thread-header">
+                                <div class="thread-author">
+                                    <div class="author-avatar">
+                                        <span th:text="${#strings.substring(thread.anonymousAlias, 0, 1)}">W</span>
+                                    </div>
+                                    <div class="author-info">
+                                        <span class="author-name" th:text="${thread.anonymousAlias}">WellnessSeeker42</span>
+                                        <span class="thread-time" th:text="${thread.timeAgo}">2h</span>
+                                    </div>
+                                </div>
+                                <button class="thread-menu-btn" onclick="toggleThreadMenu(this)">
+                                    <span>⋯</span>
+                                </button>
+                                <div class="thread-menu">
+                                    <button th:onclick="'bookmarkThread(' + ${thread.id} + ')'">
+                                        <span>🔖</span> Save
+                                    </button>
+                                    <button th:onclick="'reportThread(' + ${thread.id} + ')'">
+                                        <span>🚩</span> Report
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Thread Content -->
+                            <a class="thread-content" th:href="@{/forum/thread/{id}(id=${thread.id})}">
+                                <h3 class="thread-title" th:text="${thread.title}">How do you deal with exam anxiety?</h3>
+                                <p class="thread-text" th:text="${#strings.abbreviate(thread.content, 280)}">
+                                    Thread content preview...
+                                </p>
+                            </a>
+                            
+                            <!-- Tags -->
+                            <div class="thread-tags" th:if="${not #lists.isEmpty(thread.tags)}">
+                                <span th:each="tag : ${thread.tags}" 
+                                      class="tag" 
+                                      th:style="'background-color: ' + ${tag.color} + '20; color: ' + ${tag.color}"
+                                      th:text="'#' + ${tag.name}">#anxiety</span>
+                            </div>
+                            
+                            <!-- Thread Actions -->
+                            <div class="thread-actions">
+                                <button class="action-btn like-btn" 
+                                        th:classappend="${thread.likedByCurrentUser} ? 'liked' : ''"
+                                        th:onclick="'toggleLike(' + ${thread.id} + ', this)'">
+                                    <span class="action-icon" th:text="${thread.likedByCurrentUser} ? '❤️' : '🤍'">🤍</span>
+                                    <span class="action-count" th:text="${thread.likeCount}">23</span>
+                                </button>
+                                <a class="action-btn comment-btn" th:href="@{/forum/thread/{id}(id=${thread.id})}">
+                                    <span class="action-icon">💬</span>
+                                    <span class="action-count" th:text="${thread.actualReplyCount}">8</span>
+                                </a>
+                                <button class="action-btn view-btn">
+                                    <span class="action-icon">👁️</span>
+                                    <span class="action-count" th:text="${thread.viewCount}">156</span>
+                                </button>
+                                <button class="action-btn bookmark-btn"
+                                        th:classappend="${thread.bookmarkedByCurrentUser} ? 'bookmarked' : ''"
+                                        th:onclick="'toggleBookmark(' + ${thread.id} + ', this)'">
+                                    <span class="action-icon" th:text="${thread.bookmarkedByCurrentUser} ? '🔖' : '📑'">📑</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div th:if="${#lists.isEmpty(threads)}" class="empty-feed">
+                            <div class="empty-icon">💬</div>
+                            <h3>No posts yet</h3>
+                            <p>Be the first to start a conversation!</p>
+                            <button class="btn btn-primary" onclick="openComposeModal()">Create Post</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sidebar -->
+                <div class="forum-sidebar">
+                    <!-- Your Identity Card -->
+                    <div class="identity-card fade-in" style="animation-delay: 0.1s;">
+                        <div class="identity-header">
+                            <div class="identity-avatar">🎭</div>
+                            <div class="identity-info">
+                                <span class="identity-label">Posting as</span>
+                                <span class="identity-name" th:text="${anonymousAlias}">WellnessSeeker42</span>
+                            </div>
+                        </div>
+                        <p class="identity-note">Your identity is protected. Post freely and safely.</p>
+                    </div>
+                    
+                    <!-- Trending Tags -->
+                    <div class="trending-card fade-in" style="animation-delay: 0.15s;">
+                        <h3 class="sidebar-title">🔥 Trending Topics</h3>
+                        <div class="trending-tags">
+                            <a th:each="tag : ${trendingTags}" 
+                               th:href="@{/forum(tag=${tag.name})}"
+                               class="trending-tag">
+                                <span class="tag-name" th:text="'#' + ${tag.name}">#anxiety</span>
+                                <span class="tag-count" th:text="${tag.postCount} + ' posts'">42 posts</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Community Guidelines -->
+                    <div class="guidelines-card fade-in" style="animation-delay: 0.2s;">
+                        <h3 class="sidebar-title">📜 Community Guidelines</h3>
+                        <ul class="guidelines-list">
+                            <li>✨ Be kind and supportive</li>
+                            <li>🔒 Respect anonymity</li>
+                            <li>💬 Share experiences, not advice</li>
+                            <li>🚨 Report concerning content</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Your Drafts -->
+                    <div class="drafts-card fade-in" style="animation-delay: 0.25s;" th:if="${not #lists.isEmpty(drafts)}">
+                        <h3 class="sidebar-title">📝 Your Drafts</h3>
+                        <div class="drafts-list">
+                            <div th:each="draft : ${drafts}" class="draft-item" th:onclick="'loadDraft(' + ${draft.id} + ')'">
+                                <span class="draft-title" th:text="${draft.title ?: 'Untitled draft'}">Untitled draft</span>
+                                <span class="draft-time" th:text="${#temporals.format(draft.updatedAt, 'MMM d')}">Jan 10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Compose Modal -->
+    <div class="modal-overlay" id="composeModal" onclick="closeComposeModal(event)">
+        <div class="modal-content compose-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Create Post</h2>
+                <button class="modal-close" onclick="closeComposeModal()">&times;</button>
+            </div>
+            
+            <form id="composeForm" th:action="@{/forum/create}" method="post">
+                <div class="compose-author">
+                    <div class="author-avatar modal-avatar">
+                        <span>🎭</span>
+                    </div>
+                    <span class="author-name" th:text="${anonymousAlias}">WellnessSeeker42</span>
+                </div>
+                
+                <input type="text" id="postTitle" name="title" class="compose-title" 
+                       placeholder="What's happening?" required>
+                
+                <textarea id="postContent" name="content" class="compose-textarea" 
+                          placeholder="Share your thoughts, experiences, or ask for support..."
+                          rows="5" required></textarea>
+                
+                <div class="compose-tags">
+                    <label>Add tags:</label>
+                    <div class="tag-selector" id="tagSelector">
+                        <div th:each="tag : ${allTags}" class="tag-option" 
+                             th:data-tag-id="${tag.id}"
+                             th:style="'--tag-color: ' + ${tag.color}"
+                             onclick="toggleTag(this)">
+                            <span th:text="'#' + ${tag.name}">#tag</span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="tagIds" id="selectedTags">
+                </div>
+                
+                <div class="compose-footer">
+                    <div class="compose-options">
+                        <span class="char-count"><span id="charCount">0</span>/500</span>
+                    </div>
+                    <div class="compose-actions">
+                        <button type="button" class="btn btn-outline" onclick="saveDraft()">
+                            Save Draft
+                        </button>
+                        <button type="button" class="btn btn-ghost" onclick="closeComposeModal()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Post
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-student}" sec:authorize="hasRole('STUDENT')"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}" sec:authorize="hasRole('STUDENT')"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        /* Forum Layout */
+        .forum-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+            max-width: 1000px;
+        }
+        
+        /* Compose Box */
+        .compose-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .compose-box {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .compose-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .compose-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: #f5f5f7;
+            border-radius: 24px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        [data-theme="dark"] .compose-input {
+            background: rgba(255, 255, 255, 0.08);
+            color: #999;
+        }
+        
+        .compose-input:hover {
+            background: #ebebef;
+        }
+        
+        [data-theme="dark"] .compose-input:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .compose-btn {
+            border-radius: 24px;
+            padding: 10px 24px;
+        }
+        
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            margin-bottom: 16px;
+        }
+        
+        [data-theme="dark"] .filter-tabs {
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .filter-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .filter-tab:hover {
+            background: var(--hover-bg);
+            text-decoration: none;
+            color: var(--text);
+        }
+        
+        .filter-tab.active {
+            background: rgba(124, 93, 250, 0.1);
+            border-color: rgba(124, 93, 250, 0.3);
+            color: var(--accent);
+        }
+        
+        .filter-tab.active:hover {
+            color: var(--accent);
+        }
+        
+        /* Thread Card */
+        .thread-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .thread-card {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .thread-card:hover {
+            border-color: rgba(124, 93, 250, 0.4);
+            box-shadow: 0 8px 30px rgba(124, 93, 250, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .thread-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        
+        .thread-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .author-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .author-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .author-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        
+        .thread-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .thread-menu-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .thread-menu-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        .thread-menu {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 10;
+            overflow: hidden;
+        }
+        
+        .thread-menu.show {
+            display: block;
+        }
+        
+        .thread-menu button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .thread-menu button:hover {
+            background: var(--hover-bg);
+        }
+        
+        .thread-content {
+            cursor: pointer;
+            display: block;
+            text-decoration: none;
+        }
+        
+        .thread-content:hover .thread-title {
+            color: #7c5dfa;
+        }
+        
+        .thread-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+            transition: color 0.2s;
+        }
+        
+        [data-theme="dark"] .thread-title {
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .thread-content:hover .thread-title {
+            color: #9f7aea;
+        }
+        
+        .thread-text {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        [data-theme="dark"] .thread-text {
+            color: #999;
+        }
+        
+        .thread-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .tag {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .thread-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        [data-theme="dark"] .action-btn {
+            color: #999;
+        }
+        
+        .action-btn:hover {
+            background: var(--hover-bg);
+        }
+        
+        .action-btn.liked {
+            color: #ef4444;
+        }
+        
+        .action-btn.bookmarked {
+            color: var(--accent);
+        }
+        
+        .action-icon {
+            font-size: 1rem;
+        }
+        
+        .bookmark-btn {
+            margin-left: auto;
+        }
+        
+        /* Forum Sidebar */
+        .forum-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .identity-card, .trending-card, .guidelines-card, .drafts-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .identity-card,
+        [data-theme="dark"] .trending-card,
+        [data-theme="dark"] .guidelines-card,
+        [data-theme="dark"] .drafts-card {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .identity-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .identity-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .identity-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .identity-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .identity-name {
+            font-weight: 600;
+            color: #7c5dfa;
+        }
+        
+        .identity-note {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0;
+        }
+        
+        [data-theme="dark"] .identity-note {
+            color: #999;
+        }
+        
+        .sidebar-title {
+            margin: 0 0 16px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .sidebar-title {
+            color: #ffffff;
+        }
+        
+        .trending-tags {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .trending-tag {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .trending-tag:hover {
+            background: rgba(124, 93, 250, 0.08);
+        }
+        
+        .tag-name {
+            color: #7c5dfa;
+            font-weight: 500;
+        }
+        
+        .tag-count {
+            color: #666;
+            font-size: 0.8rem;
+        }
+        
+        [data-theme="dark"] .tag-count {
+            color: #999;
+        }
+        
+        .guidelines-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .guidelines-list li {
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: #666;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        
+        [data-theme="dark"] .guidelines-list li {
+            color: #999;
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .guidelines-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .drafts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .draft-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: var(--hover-bg);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .draft-item:hover {
+            background: var(--border);
+        }
+        
+        .draft-title {
+            font-size: 0.9rem;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+        }
+        
+        .draft-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        /* Empty Feed */
+        .empty-feed {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+        
+        .empty-feed h3 {
+            margin: 0 0 8px 0;
+            color: var(--text);
+        }
+        
+        .empty-feed p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 9999;
+            padding: 60px 20px;
+            overflow-y: auto;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            animation: modalSlideIn 0.3s ease;
+            overflow: hidden;
+        }
+        
+        [data-theme="dark"] .modal-content {
+            background: #1e1e2e;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.08), rgba(124, 93, 250, 0.03));
+        }
+        
+        [data-theme="dark"] .modal-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.15), rgba(124, 93, 250, 0.05));
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .modal-header h2 {
+            color: #ffffff;
+        }
+        
+        .modal-close, .modal-back {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.05);
+            color: #666;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        [data-theme="dark"] .modal-close,
+        [data-theme="dark"] .modal-back {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+        }
+        
+        .modal-close:hover, .modal-back:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        
+        /* Compose Modal */
+        .compose-modal form {
+            padding: 20px 24px;
+            background: #ffffff;
+        }
+        
+        [data-theme="dark"] .compose-modal form {
+            background: #1e1e2e;
+        }
+        
+        .compose-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .compose-author .author-name {
+            color: #1a1a2e;
+            font-weight: 500;
+        }
+        
+        [data-theme="dark"] .compose-author .author-name {
+            color: #ffffff;
+        }
+        
+        .modal-avatar {
+            width: 44px;
+            height: 44px;
+        }
+        
+        .compose-title {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            background: transparent;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            outline: none;
+        }
+        
+        [data-theme="dark"] .compose-title {
+            color: #ffffff;
+        }
+        
+        .compose-title::placeholder {
+            color: #999;
+        }
+        
+        [data-theme="dark"] .compose-title::placeholder {
+            color: #666;
+        }
+        
+        .compose-textarea {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            color: #1a1a2e;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+        
+        [data-theme="dark"] .compose-textarea {
+            color: #ffffff;
+        }
+        
+        .compose-textarea::placeholder {
+            color: #999;
+        }
+        
+        [data-theme="dark"] .compose-textarea::placeholder {
+            color: #666;
+        }
+        
+        .compose-tags {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .compose-tags label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag-option {
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            background: var(--hover-bg);
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        
+        .tag-option:hover {
+            background: var(--border);
+        }
+        
+        .tag-option.selected {
+            background: var(--tag-color, var(--accent));
+            color: white;
+        }
+        
+        .compose-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .char-count {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .compose-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+        }
+        
+        .btn-ghost:hover {
+            background: var(--hover-bg);
+        }
+        
+        
+        /* Responsive */
+        @media (max-width: 900px) {
+            .forum-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .forum-sidebar {
+                order: -1;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .identity-card {
+                grid-column: span 2;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .forum-sidebar {
+                grid-template-columns: 1fr;
+            }
+            
+            .identity-card {
+                grid-column: span 1;
+            }
+            
+            .compose-box {
+                flex-wrap: wrap;
+            }
+            
+            .compose-input {
+                order: 3;
+                width: 100%;
+                margin-top: 8px;
+            }
+            
+            .compose-btn {
+                margin-left: auto;
+            }
+            
+            .filter-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 8px;
+            }
+        }
+    </style>
+    
+    <script th:inline="javascript">
+        // State
+        let selectedTags = [];
+        
+        // Compose Modal
+        function openComposeModal() {
+            document.getElementById('composeModal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('postTitle').focus();
+        }
+        
+        function closeComposeModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('composeModal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        // Tag Selection
+        function toggleTag(element) {
+            const tagId = element.dataset.tagId;
+            
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+                selectedTags = selectedTags.filter(id => id !== tagId);
+            } else {
+                element.classList.add('selected');
+                selectedTags.push(tagId);
+            }
+            
+            document.getElementById('selectedTags').value = selectedTags.join(',');
+        }
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        
+        // Like/Bookmark Actions
+        function toggleLike(threadId, button) {
+            fetch(`/forum/thread/${threadId}/like`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const icon = button.querySelector('.action-icon');
+                    const count = button.querySelector('.action-count');
+                    
+                    if (data.liked) {
+                        button.classList.add('liked');
+                        icon.textContent = '❤️';
+                    } else {
+                        button.classList.remove('liked');
+                        icon.textContent = '🤍';
+                    }
+                    count.textContent = data.likeCount;
+                })
+                .catch((err) => {
+                    console.error('Like error:', err);
+                    // Fallback - just toggle UI
+                    button.classList.toggle('liked');
+                });
+        }
+        
+        function toggleBookmark(threadId, button) {
+            fetch(`/forum/thread/${threadId}/bookmark`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const icon = button.querySelector('.action-icon');
+                    
+                    if (data.bookmarked) {
+                        button.classList.add('bookmarked');
+                        icon.textContent = '🔖';
+                    } else {
+                        button.classList.remove('bookmarked');
+                        icon.textContent = '📑';
+                    }
+                })
+                .catch((err) => {
+                    console.error('Bookmark error:', err);
+                    button.classList.toggle('bookmarked');
+                });
+        }
+        
+        // Thread Menu
+        function toggleThreadMenu(button) {
+            const menu = button.nextElementSibling;
+            document.querySelectorAll('.thread-menu.show').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        }
+        
+        // Close menus on click outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.thread-menu-btn') && !e.target.closest('.thread-menu')) {
+                document.querySelectorAll('.thread-menu.show').forEach(m => m.classList.remove('show'));
+            }
+        });
+        
+        // Save Draft
+        function saveDraft() {
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            
+            fetch('/forum/draft/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content, tagIds: selectedTags })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Draft saved!');
+                    closeComposeModal();
+                }
+            })
+            .catch(() => {
+                alert('Could not save draft. Please try again.');
+            });
+        }
+        
+        // Load Draft
+        function loadDraft(draftId) {
+            fetch(`/forum/draft/${draftId}`)
+                .then(response => response.json())
+                .then(draft => {
+                    document.getElementById('postTitle').value = draft.title || '';
+                    document.getElementById('postContent').value = draft.content || '';
+                    openComposeModal();
+                });
+        }
+        
+        // Character count
+        document.getElementById('postContent')?.addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+        
+        // Filter tabs are now links - no JS needed
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeComposeModal();
+            }
+            if (e.key === 'n' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                openComposeModal();
+            }
+        });
+    </script>
+</body>
+</html>

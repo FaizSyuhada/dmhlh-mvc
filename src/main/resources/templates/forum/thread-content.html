@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Thread Content Fragment for Modal -->
+    <div th:fragment="threadContent">
+        <style>
+            .thread-modal-main {
+                padding: 24px;
+                background: #ffffff;
+            }
+            
+            [data-theme="dark"] .thread-modal-main {
+                background: #1e1e2e;
+            }
+            
+            .thread-detail-header {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            
+            .thread-detail-avatar {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #7c5dfa, #9f7aea);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 600;
+                font-size: 1.1rem;
+                flex-shrink: 0;
+            }
+            
+            .thread-detail-info {
+                flex: 1;
+            }
+            
+            .thread-detail-author {
+                font-weight: 600;
+                color: #1a1a2e;
+                font-size: 1rem;
+            }
+            
+            [data-theme="dark"] .thread-detail-author {
+                color: #ffffff;
+            }
+            
+            .thread-detail-time {
+                color: #666;
+                font-size: 0.85rem;
+                margin-top: 2px;
+            }
+            
+            [data-theme="dark"] .thread-detail-time {
+                color: #999;
+            }
+            
+            .thread-detail-title {
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 12px;
+                line-height: 1.4;
+            }
+            
+            [data-theme="dark"] .thread-detail-title {
+                color: #ffffff;
+            }
+            
+            .thread-detail-content {
+                font-size: 1rem;
+                line-height: 1.7;
+                color: #333;
+                margin-bottom: 20px;
+                white-space: pre-wrap;
+            }
+            
+            [data-theme="dark"] .thread-detail-content {
+                color: #ddd;
+            }
+            
+            .thread-detail-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+            
+            .thread-detail-tag {
+                padding: 4px 12px;
+                border-radius: 16px;
+                font-size: 0.8rem;
+                background: rgba(124, 93, 250, 0.1);
+                color: #7c5dfa;
+            }
+            
+            .thread-detail-stats {
+                display: flex;
+                gap: 20px;
+                padding: 16px 0;
+                border-top: 1px solid rgba(0, 0, 0, 0.08);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+                margin-bottom: 24px;
+            }
+            
+            [data-theme="dark"] .thread-detail-stats {
+                border-color: rgba(255, 255, 255, 0.08);
+            }
+            
+            .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #666;
+                font-size: 0.9rem;
+            }
+            
+            [data-theme="dark"] .stat-item {
+                color: #999;
+            }
+            
+            .replies-section h4 {
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1a1a2e;
+                margin-bottom: 16px;
+            }
+            
+            [data-theme="dark"] .replies-section h4 {
+                color: #ffffff;
+            }
+            
+            .reply-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .reply-item {
+                padding: 16px;
+                background: rgba(0, 0, 0, 0.02);
+                border-radius: 12px;
+            }
+            
+            [data-theme="dark"] .reply-item {
+                background: rgba(255, 255, 255, 0.03);
+            }
+            
+            .reply-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .reply-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #10b981, #34d399);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }
+            
+            .reply-author {
+                font-weight: 600;
+                color: #1a1a2e;
+                font-size: 0.9rem;
+            }
+            
+            [data-theme="dark"] .reply-author {
+                color: #ffffff;
+            }
+            
+            .reply-time {
+                color: #999;
+                font-size: 0.8rem;
+            }
+            
+            .reply-content {
+                color: #333;
+                font-size: 0.95rem;
+                line-height: 1.6;
+                white-space: pre-wrap;
+            }
+            
+            [data-theme="dark"] .reply-content {
+                color: #ddd;
+            }
+            
+            .no-replies {
+                text-align: center;
+                padding: 32px;
+                color: #999;
+            }
+            
+            .reply-form {
+                margin-top: 24px;
+                padding-top: 24px;
+                border-top: 1px solid rgba(0, 0, 0, 0.08);
+            }
+            
+            [data-theme="dark"] .reply-form {
+                border-color: rgba(255, 255, 255, 0.08);
+            }
+            
+            .reply-form textarea {
+                width: 100%;
+                padding: 12px;
+                border-radius: 12px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                background: #fafafa;
+                color: #1a1a2e;
+                font-size: 0.95rem;
+                font-family: inherit;
+                resize: none;
+                min-height: 80px;
+                margin-bottom: 12px;
+            }
+            
+            [data-theme="dark"] .reply-form textarea {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: #ffffff;
+            }
+            
+            .reply-form textarea:focus {
+                outline: none;
+                border-color: #7c5dfa;
+            }
+            
+            .reply-form-actions {
+                display: flex;
+                justify-content: flex-end;
+            }
+            
+            .reply-form .btn {
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            
+            .reply-form .btn-primary {
+                background: linear-gradient(135deg, #7c5dfa, #9f7aea);
+                color: white;
+                border: none;
+            }
+            
+            .reply-form .btn-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(124, 93, 250, 0.4);
+            }
+        </style>
+        
+        <div class="thread-modal-main">
+            <!-- Thread Header -->
+            <div class="thread-detail-header">
+                <div class="thread-detail-avatar" th:text="${#strings.substring(thread.anonymousAlias, 0, 1)}">A</div>
+                <div class="thread-detail-info">
+                    <div class="thread-detail-author" th:text="${thread.anonymousAlias}">Anonymous User</div>
+                    <div class="thread-detail-time" th:text="${#temporals.format(thread.createdAt, 'MMM dd, yyyy · HH:mm')}">Jan 14, 2026 · 10:30</div>
+                </div>
+            </div>
+            
+            <!-- Thread Title -->
+            <h2 class="thread-detail-title" th:text="${thread.title}">Thread Title</h2>
+            
+            <!-- Thread Content -->
+            <div class="thread-detail-content" th:text="${thread.content}">Thread content goes here...</div>
+            
+            <!-- Tags -->
+            <div class="thread-detail-tags" th:if="${thread.tags != null and !thread.tags.isEmpty()}">
+                <span class="thread-detail-tag" th:each="tag : ${thread.tags}" 
+                      th:text="'#' + ${tag.name}">
+                    #tag
+                </span>
+            </div>
+            
+            <!-- Stats -->
+            <div class="thread-detail-stats">
+                <div class="stat-item">
+                    <span>❤️</span>
+                    <span th:text="${thread.likeCount}">0</span> likes
+                </div>
+                <div class="stat-item">
+                    <span>💬</span>
+                    <span th:text="${thread.replyCount}">0</span> replies
+                </div>
+                <div class="stat-item">
+                    <span>👁️</span>
+                    <span th:text="${thread.viewCount}">0</span> views
+                </div>
+            </div>
+            
+            <!-- Replies -->
+            <div class="replies-section">
+                <h4>💬 Replies</h4>
+                
+                <div class="reply-list" th:if="${posts != null and !posts.isEmpty()}">
+                    <div class="reply-item" th:each="post : ${posts}">
+                        <div class="reply-header">
+                            <div class="reply-avatar" th:text="${#strings.substring(post.anonymousAlias, 0, 1)}">A</div>
+                            <div class="reply-author" th:text="${post.anonymousAlias}">Anonymous</div>
+                            <div class="reply-time" th:text="${#temporals.format(post.createdAt, 'MMM dd, HH:mm')}">Jan 14, 10:30</div>
+                        </div>
+                        <div class="reply-content" th:text="${post.content}">Reply content...</div>
+                    </div>
+                </div>
+                
+                <div class="no-replies" th:if="${posts == null or posts.isEmpty()}">
+                    <p>No replies yet. Be the first to respond! 💬</p>
+                </div>
+            </div>
+            
+            <!-- Reply Form -->
+            <form class="reply-form" th:action="@{/forum/thread/{id}/reply(id=${thread.id})}" method="post">
+                <textarea name="content" placeholder="Share your thoughts..." rows="3" required></textarea>
+                <div class="reply-form-actions">
+                    <button type="submit" class="btn btn-primary">Reply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

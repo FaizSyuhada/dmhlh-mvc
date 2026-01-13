@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Self-Assessment - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h1><span class="emoji">📋</span> Self-Assessment</h1>
+                    <p>Understand your mental health with these quick assessments</p>
+                </div>
+                <a th:href="@{/student/assessment/history}" class="btn btn-outline" style="display: flex; align-items: center; gap: 8px;">
+                    <span>📊</span>
+                    <span>View History</span>
+                </a>
+            </div>
+            
+            <!-- Info Banner -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(124, 111, 174, 0.15), rgba(165, 153, 212, 0.08)); margin-bottom: 24px;">
+                <div style="display: flex; gap: 16px; align-items: flex-start;">
+                    <div style="font-size: 1.5rem;">ℹ️</div>
+                    <div>
+                        <p style="margin: 0; font-weight: 500;">About Self-Assessments</p>
+                        <p style="margin: 8px 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">
+                            These assessments help you understand your mental health status. They are not diagnostic tools, 
+                            but can indicate when you might benefit from professional support.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assessment Cards -->
+            <div class="content-grid assessment-grid">
+                <div th:each="assessment : ${assessments}" class="card assessment-card">
+                    <!-- Card Header with Type-specific styling -->
+                    <div class="assessment-card-header" 
+                         th:classappend="${assessment.code == 'PHQ9'} ? 'depression' : 'anxiety'">
+                        <div class="assessment-icon">
+                            <span th:text="${assessment.code == 'PHQ9'} ? '🧠' : '😰'">📋</span>
+                        </div>
+                        <h3 th:text="${assessment.name}">PHQ-9</h3>
+                        <span class="assessment-type-badge" th:text="${assessment.code == 'PHQ9'} ? 'Depression' : 'Anxiety'">Type</span>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="assessment-card-body">
+                        <p class="assessment-description" th:text="${assessment.description}">Description</p>
+                        
+                        <div class="assessment-meta">
+                            <div class="meta-item">
+                                <span>📝</span>
+                                <span th:text="${#lists.size(assessment.questions)} + ' questions'">9 questions</span>
+                            </div>
+                            <div class="meta-item">
+                                <span>⏱️</span>
+                                <span th:text="${#lists.size(assessment.questions) > 7} ? '~5 minutes' : '~3 minutes'">~5 minutes</span>
+                            </div>
+                            <div class="meta-item">
+                                <span>📊</span>
+                                <span th:text="'Max: ' + ${assessment.maxScore} + ' pts'">Max: 27 pts</span>
+                            </div>
+                        </div>
+                        
+                        <a th:href="@{/student/assessment/{code}(code=${assessment.code})}" class="btn btn-primary btn-full">
+                            <span>▶️</span>
+                            <span>Start Assessment</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div th:if="${#lists.isEmpty(assessments)}" class="card">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No Assessments Available</h3>
+                        <p>Check back later for new assessments.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div th:replace="~{fragments/layout :: footer}"></div>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <!-- Scripts -->
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

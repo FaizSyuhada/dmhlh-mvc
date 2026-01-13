@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Faculty Dashboard')}"></head>
+<body>
+    <!-- Animated Background -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <header th:replace="~{fragments/layout :: mobile-header}"></header>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-faculty}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>👋</span>
+                    Welcome, <span th:text="${user.displayName}">Professor</span>
+                </h1>
+                <p class="page-subtitle">Student wellbeing referral portal</p>
+            </div>
+            
+            <!-- Info Banner -->
+            <div class="nudge-card nudge-info fade-in" style="animation-delay: 0.1s; margin-bottom: 24px;">
+                <span class="nudge-icon">💡</span>
+                <div class="nudge-content">
+                    <span class="nudge-message">If you notice a student who may need support, you can submit a referral to connect them with our counselling team. Your concern helps us support students early.</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 card-grid">
+                <!-- Quick Referral -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-person-plus"></i>
+                            Submit a Referral
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Concerned about a student? Submit a referral to our counselling team for follow-up.
+                        </p>
+                        <a th:href="@{/faculty/referrals/new}" class="btn btn-primary btn-lg" style="width: 100%;">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>New Referral</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- My Referrals -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-list-check"></i>
+                            My Referrals
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${not #lists.isEmpty(myReferrals)}" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div th:each="ref, iter : ${myReferrals}" th:if="${iter.index < 3}"
+                                 style="padding: 14px; background: var(--surface-2); border-radius: 14px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <span style="font-weight: 600; color: var(--text);" th:text="${ref.studentIdentifier}">student@example.com</span>
+                                    <span class="badge" 
+                                          th:classappend="${ref.status == 'PENDING' ? 'badge-warning' : (ref.status == 'IN_REVIEW' ? 'badge-primary' : 'badge-success')}"
+                                          th:text="${ref.status}">PENDING</span>
+                                </div>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;"
+                                   th:text="${#temporals.format(ref.createdAt, 'MMM dd, yyyy')}">Jan 10, 2026</p>
+                            </div>
+                        </div>
+                        <div th:unless="${not #lists.isEmpty(myReferrals)}" class="empty-state" style="padding: 24px;">
+                            <div class="empty-state-icon" style="font-size: 2rem;">📋</div>
+                            <div class="empty-state-title">No referrals yet</div>
+                            <div class="empty-state-description">Your submitted referrals will appear here.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resources -->
+                <div class="card hover-lift" style="grid-column: span 2;">
+                    <div class="card-header">
+                        <span class="card-title">
+                            <i class="bi bi-book"></i>
+                            Faculty Resources
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                            <div style="padding: 20px; background: var(--surface-2); border-radius: 14px;">
+                                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.15), rgba(var(--accent-rgb), 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                                    <i class="bi bi-eye" style="font-size: 1.25rem; color: var(--accent);"></i>
+                                </div>
+                                <h4 style="font-weight: 600; color: var(--text); margin-bottom: 8px;">Recognizing Signs</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                                    Learn to identify students who may be struggling with mental health issues.
+                                </p>
+                            </div>
+                            
+                            <div style="padding: 20px; background: var(--surface-2); border-radius: 14px;">
+                                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(var(--accent-2-rgb), 0.15), rgba(var(--accent-2-rgb), 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                                    <i class="bi bi-chat-dots" style="font-size: 1.25rem; color: var(--accent-2);"></i>
+                                </div>
+                                <h4 style="font-weight: 600; color: var(--text); margin-bottom: 8px;">Starting Conversations</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                                    Tips for approaching and supporting students with care and sensitivity.
+                                </p>
+                            </div>
+                            
+                            <div style="padding: 20px; background: var(--surface-2); border-radius: 14px;">
+                                <div style="width: 48px; height: 48px; background: linear-gradient(135deg, rgba(var(--accent-3-rgb), 0.15), rgba(var(--accent-3-rgb), 0.05)); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                                    <i class="bi bi-telephone" style="font-size: 1.25rem; color: var(--accent-3);"></i>
+                                </div>
+                                <h4 style="font-weight: 600; color: var(--text); margin-bottom: 8px;">Emergency Contacts</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                                    Quick access to crisis hotlines and emergency support services.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-faculty}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-faculty}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

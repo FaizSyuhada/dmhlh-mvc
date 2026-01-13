@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('New Assessment - Admin')}"></head>
+<body>
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <div th:replace="~{fragments/layout :: sidebar-admin}"></div>
+        
+        <main class="main-content">
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>➕</span> Create New Assessment
+                </h1>
+                <p class="page-subtitle">Define a new self-assessment questionnaire</p>
+            </div>
+            
+            <div class="card hover-lift fade-in" style="animation-delay: 0.1s; max-width: 800px;">
+                <div class="card-header">
+                    <span class="card-title">
+                        <i class="bi bi-file-earmark-plus"></i>
+                        Assessment Details
+                    </span>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/assessments/create}" method="post">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Code *</label>
+                                <input type="text" name="code" class="form-control" 
+                                       placeholder="e.g., PHQ9, GAD7" required
+                                       pattern="[A-Za-z0-9]+" maxlength="50"
+                                       style="text-transform: uppercase;">
+                                <small class="form-hint">Unique identifier (letters and numbers only)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Name *</label>
+                                <input type="text" name="name" class="form-control" 
+                                       placeholder="e.g., Patient Health Questionnaire" required>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" class="form-control" rows="3"
+                                          placeholder="Brief description of what this assessment measures..."></textarea>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label class="form-label">Instructions</label>
+                                <textarea name="instructions" class="form-control" rows="3"
+                                          placeholder="Instructions shown to users before taking the assessment..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Max Score</label>
+                                <input type="number" name="maxScore" class="form-control" 
+                                       placeholder="e.g., 27" min="1">
+                                <small class="form-hint">Maximum possible score</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <div class="form-check">
+                                    <input type="checkbox" name="active" id="active" checked class="form-check-input">
+                                    <label for="active" class="form-check-label">Active (visible to users)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <a th:href="@{/admin/assessments}" class="btn btn-outline">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Assessment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+    
+    <style>
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .form-hint {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+        
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</body>
+</html>

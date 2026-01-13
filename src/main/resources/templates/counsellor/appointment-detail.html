@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Appointment Details - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-counsellor}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="breadcrumb-nav">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/counsellor/appointments}">Appointments</a></li>
+                    <li class="breadcrumb-item active">Details</li>
+                </ol>
+            </nav>
+            
+            <!-- Success Message -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom: 24px; padding: 16px; border-radius: 12px; background: rgba(129, 178, 154, 0.15); border: 1px solid rgba(129, 178, 154, 0.3); color: var(--accent-2);">
+                <span th:text="${success}">Success</span>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 card-grid">
+                <!-- Appointment Info -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title"><i class="bi bi-calendar-event"></i> Appointment</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Student:</strong> <span th:text="${appointment.student.displayName}">Name</span></p>
+                        <p><strong>Email:</strong> <span th:text="${appointment.student.email}">Email</span></p>
+                        <p><strong>Date:</strong> <span th:text="${#temporals.format(appointment.startAt, 'MMM dd, yyyy HH:mm')}">Date</span></p>
+                        <p><strong>Status:</strong> 
+                            <span class="status-badge" th:classappend="${appointment.status}" th:text="${appointment.status}">Status</span>
+                        </p>
+                        <p th:if="${appointment.reason}"><strong>Reason:</strong> <span th:text="${appointment.reason}">Reason</span></p>
+                        
+                        <hr style="margin: 20px 0; border-color: var(--border);">
+                        
+                        <!-- Status Actions -->
+                        <div th:if="${appointment.status.name() != 'COMPLETED' and appointment.status.name() != 'CANCELLED'}" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <form th:action="@{/counsellor/appointments/{id}/status(id=${appointment.id})}" method="post" style="display: inline;">
+                                <input type="hidden" name="status" value="CONFIRMED">
+                                <button type="submit" class="btn btn-sm btn-primary" th:if="${appointment.status.name() == 'SCHEDULED'}">
+                                    <i class="bi bi-check"></i> Confirm
+                                </button>
+                            </form>
+                            <form th:action="@{/counsellor/appointments/{id}/status(id=${appointment.id})}" method="post" style="display: inline;">
+                                <input type="hidden" name="status" value="COMPLETED">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-check-all"></i> Complete
+                                </button>
+                            </form>
+                            <form th:action="@{/counsellor/appointments/{id}/status(id=${appointment.id})}" method="post" style="display: inline;">
+                                <input type="hidden" name="status" value="CANCELLED">
+                                <button type="submit" class="btn btn-sm btn-outline">Cancel</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Student Summary -->
+                <div class="card hover-lift">
+                    <div class="card-header">
+                        <span class="card-title"><i class="bi bi-person-badge"></i> Student Summary</span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${latestAssessment != null}" style="margin-bottom: 16px;">
+                            <strong>Latest Assessment:</strong>
+                            <span class="severity-badge" th:classappend="${latestAssessment.severity}" th:text="${latestAssessment.severity}">Severity</span>
+                            <span style="color: var(--text-muted); font-size: 0.9rem; margin-left: 8px;" 
+                                  th:text="${#temporals.format(latestAssessment.completedAt, 'MMM dd')}">Date</span>
+                        </div>
+                        
+                        <div th:if="${averageMood != null}" style="margin-bottom: 16px;">
+                            <strong>14-Day Mood Average:</strong>
+                            <span th:text="${#numbers.formatDecimal(averageMood, 1, 1)}">3.5</span> / 5
+                        </div>
+                        
+                        <div th:if="${not #lists.isEmpty(recentMoods)}">
+                            <strong>Recent Moods:</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                <span th:each="mood : ${recentMoods}" 
+                                      style="font-size: 1.5rem;"
+                                      th:text="${mood.moodEmoji}" th:title="${mood.moodLabel}">😐</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Session Notes -->
+            <div class="card hover-lift" style="margin-top: 24px;">
+                <div class="card-header">
+                    <span class="card-title"><i class="bi bi-journal-text"></i> Session Notes</span>
+                </div>
+                <div class="card-body">
+                    <!-- Add Note Form -->
+                    <form th:action="@{/counsellor/appointments/{id}/note(id=${appointment.id})}" method="post" style="margin-bottom: 24px;">
+                        <div style="margin-bottom: 12px;">
+                            <textarea class="form-control" name="note" rows="3" placeholder="Add a note..." required></textarea>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="shareWithStudent" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                <span>Share with student</span>
+                            </label>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Add Note
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Notes List -->
+                    <div th:if="${#lists.isEmpty(notes)}" class="empty-state" style="padding: 24px;">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-title">No notes yet</div>
+                    </div>
+                    
+                    <div th:each="note : ${notes}" 
+                         style="border-left: 3px solid; padding-left: 16px; margin-bottom: 16px;"
+                         th:styleappend="${note.shareWithStudent} ? 'border-color: var(--accent-2);' : 'border-color: var(--border);'">
+                        <p style="margin-bottom: 4px;" th:text="${note.note}">Note content</p>
+                        <small style="color: var(--text-muted);">
+                            <span th:text="${note.author.displayName}">Author</span> • 
+                            <span th:text="${#temporals.format(note.createdAt, 'MMM dd, HH:mm')}">Date</span>
+                            <span th:if="${note.shareWithStudent}" style="background: rgba(129, 178, 154, 0.2); color: var(--accent-2); padding: 2px 8px; border-radius: 4px; margin-left: 8px; font-size: 0.75rem;">Shared</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="page-footer">
+                <p>© 2025 Solace Mental Health Hub</p>
+                <p>Your wellbeing matters. If you're in crisis, please call emergency services.</p>
+            </div>
+        </main>
+    </div>
+    
+    <style>
+        .severity-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 500; }
+        .severity-badge.MINIMAL { background: rgba(129, 178, 154, 0.2); color: var(--accent-2); }
+        .severity-badge.MILD { background: rgba(124, 111, 174, 0.2); color: var(--accent); }
+        .severity-badge.MODERATE { background: rgba(251, 191, 36, 0.2); color: #b45309; }
+        .severity-badge.MODERATELY_SEVERE, .severity-badge.SEVERE { background: rgba(224, 122, 95, 0.2); color: var(--accent-3); }
+    </style>
+    
+    <!-- Mobile Navigation -->
+    <nav th:replace="~{fragments/layout :: mobile-nav-counsellor}"></nav>
+    <div th:replace="~{fragments/layout :: mobile-menu-counsellor}"></div>
+    
+    <div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

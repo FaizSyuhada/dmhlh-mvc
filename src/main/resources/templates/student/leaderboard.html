@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Leaderboard - Solace')}"></head>
+<body>
+    <!-- Background Layer -->
+    <div th:replace="~{fragments/layout :: blobs}"></div>
+    
+    <!-- Mobile Header -->
+    <div th:replace="~{fragments/layout :: mobile-header}"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div th:replace="~{fragments/layout :: sidebar-student}"></div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header fade-in">
+                <h1 class="page-title">
+                    <span>🏆</span> Leaderboard
+                </h1>
+                <p class="page-subtitle">Track your progress and compete with the community</p>
+            </div>
+            
+            <!-- Stats Overview -->
+            <div class="stats-row fade-in" style="animation-delay: 0.1s;">
+                <div class="stat-card rank-card">
+                    <div class="stat-icon">🥇</div>
+                    <div class="stat-content">
+                        <div class="stat-value" th:text="'#' + ${userRank}">1</div>
+                        <div class="stat-label">Your Rank</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-content">
+                        <div class="stat-value" th:text="${userPoints?.totalPoints ?: 0}">0</div>
+                        <div class="stat-label">Total Points</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-value" th:text="'Level ' + ${userPoints?.currentLevel ?: 1}">Level 1</div>
+                        <div class="stat-label">Current Level</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-content">
+                        <div class="stat-value" th:text="${userPoints?.currentStreak ?: 0} + ' days'">0 days</div>
+                        <div class="stat-label">Current Streak</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="leaderboard-layout fade-in" style="animation-delay: 0.2s;">
+                <!-- Main Leaderboard -->
+                <div class="leaderboard-main">
+                    <!-- Top 3 Podium -->
+                    <div class="podium-section">
+                        <div class="podium">
+                            <!-- 2nd Place -->
+                            <div class="podium-item second" th:if="${#lists.size(leaderboard) > 1}">
+                                <div class="podium-avatar">
+                                    <span th:text="${#strings.substring(leaderboard[1].user.displayName, 0, 2).toUpperCase()}">AB</span>
+                                </div>
+                                <div class="podium-name" th:text="${leaderboard[1].user.displayName}">User 2</div>
+                                <div class="podium-points" th:text="${leaderboard[1].totalPoints} + ' pts'">500 pts</div>
+                                <div class="podium-stand">
+                                    <span class="podium-rank">2</span>
+                                    <span class="medal">🥈</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 1st Place -->
+                            <div class="podium-item first" th:if="${#lists.size(leaderboard) > 0}">
+                                <div class="crown">👑</div>
+                                <div class="podium-avatar gold">
+                                    <span th:text="${#strings.substring(leaderboard[0].user.displayName, 0, 2).toUpperCase()}">AB</span>
+                                </div>
+                                <div class="podium-name" th:text="${leaderboard[0].user.displayName}">User 1</div>
+                                <div class="podium-points" th:text="${leaderboard[0].totalPoints} + ' pts'">1000 pts</div>
+                                <div class="podium-stand gold">
+                                    <span class="podium-rank">1</span>
+                                    <span class="medal">🥇</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 3rd Place -->
+                            <div class="podium-item third" th:if="${#lists.size(leaderboard) > 2}">
+                                <div class="podium-avatar">
+                                    <span th:text="${#strings.substring(leaderboard[2].user.displayName, 0, 2).toUpperCase()}">AB</span>
+                                </div>
+                                <div class="podium-name" th:text="${leaderboard[2].user.displayName}">User 3</div>
+                                <div class="podium-points" th:text="${leaderboard[2].totalPoints} + ' pts'">250 pts</div>
+                                <div class="podium-stand">
+                                    <span class="podium-rank">3</span>
+                                    <span class="medal">🥉</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Full Ranking List -->
+                    <div class="ranking-list">
+                        <div class="ranking-header">
+                            <span class="rank-col">Rank</span>
+                            <span class="user-col">User</span>
+                            <span class="level-col">Level</span>
+                            <span class="streak-col">Streak</span>
+                            <span class="points-col">Points</span>
+                        </div>
+                        
+                        <div th:each="entry, iter : ${leaderboard}" 
+                             class="ranking-item"
+                             th:classappend="${entry.user.id == currentUser.id} ? 'current-user' : ''">
+                            <span class="rank-col">
+                                <span class="rank-badge" th:classappend="${iter.index < 3} ? 'top-' + (${iter.index} + 1) : ''">
+                                    <span th:if="${iter.index == 0}">🥇</span>
+                                    <span th:if="${iter.index == 1}">🥈</span>
+                                    <span th:if="${iter.index == 2}">🥉</span>
+                                    <span th:if="${iter.index > 2}" th:text="${iter.index + 1}">#</span>
+                                </span>
+                            </span>
+                            <span class="user-col">
+                                <div class="user-avatar" th:classappend="${entry.user.id == currentUser.id} ? 'you' : ''">
+                                    <span th:text="${#strings.substring(entry.user.displayName, 0, 1).toUpperCase()}">A</span>
+                                </div>
+                                <div class="user-info">
+                                    <span class="user-name" th:text="${entry.user.displayName}">Username</span>
+                                    <span class="user-tag" th:if="${entry.user.id == currentUser.id}">You</span>
+                                </div>
+                            </span>
+                            <span class="level-col">
+                                <span class="level-badge" th:text="'Lv.' + ${entry.currentLevel}">Lv.1</span>
+                            </span>
+                            <span class="streak-col">
+                                <span th:if="${entry.currentStreak > 0}">🔥 <span th:text="${entry.currentStreak}">0</span></span>
+                                <span th:unless="${entry.currentStreak > 0}" class="no-streak">-</span>
+                            </span>
+                            <span class="points-col">
+                                <span class="points-value" th:text="${entry.totalPoints}">0</span>
+                                <span class="points-label">pts</span>
+                            </span>
+                        </div>
+                        
+                        <div th:if="${#lists.isEmpty(leaderboard)}" class="empty-leaderboard">
+                            <span>🏆</span>
+                            <p>No one on the leaderboard yet. Be the first!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Badge Collection Sidebar -->
+                <div class="badge-sidebar">
+                    <div class="badge-section">
+                        <h3 class="section-title">
+                            <span>🏅</span> Your Badges
+                            <span class="badge-count" th:text="${#lists.size(userBadges)} + '/' + ${#lists.size(allBadges)}">0/12</span>
+                        </h3>
+                        
+                        <div class="earned-badges" th:if="${not #lists.isEmpty(userBadges)}">
+                            <div th:each="userBadge : ${userBadges}" class="badge-item earned">
+                                <div class="badge-icon" th:text="${userBadge.badge.iconUrl}">🎯</div>
+                                <div class="badge-info">
+                                    <div class="badge-name" th:text="${userBadge.badge.name}">Badge Name</div>
+                                    <div class="badge-date" th:text="'Earned ' + ${#temporals.format(userBadge.earnedAt, 'MMM d')}">Earned Jan 1</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="no-badges" th:if="${#lists.isEmpty(userBadges)}">
+                            <span>🎖️</span>
+                            <p>No badges earned yet. Keep going!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="badge-section">
+                        <h3 class="section-title">
+                            <span>🎯</span> Available Badges
+                        </h3>
+                        
+                        <div class="available-badges">
+                            <div th:each="badge : ${allBadges}" 
+                                 class="badge-item"
+                                 th:classappend="${#lists.contains(earnedBadgeIds, badge.id)} ? 'earned' : 'locked'">
+                                <div class="badge-icon" th:text="${badge.iconUrl}">🎯</div>
+                                <div class="badge-info">
+                                    <div class="badge-name" th:text="${badge.name}">Badge Name</div>
+                                    <div class="badge-desc" th:text="${badge.description}">Description</div>
+                                    <div class="badge-reward" th:if="${badge.pointsValue > 0}">
+                                        +<span th:text="${badge.pointsValue}">50</span> pts
+                                    </div>
+                                </div>
+                                <div class="badge-status">
+                                    <span th:if="${#lists.contains(earnedBadgeIds, badge.id)}" class="earned-check">✓</span>
+                                    <span th:unless="${#lists.contains(earnedBadgeIds, badge.id)}" class="locked-icon">🔒</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="activity-section">
+                        <h3 class="section-title">
+                            <span>📊</span> Recent Activity
+                        </h3>
+                        
+                        <div class="activity-list">
+                            <div th:each="tx : ${recentTransactions}" class="activity-item">
+                                <span class="activity-points" th:classappend="${tx.points > 0} ? 'positive' : 'negative'"
+                                      th:text="${tx.points > 0} ? '+' + ${tx.points} : ${tx.points}">+10</span>
+                                <span class="activity-desc" th:text="${tx.description}">Activity description</span>
+                                <span class="activity-time" th:text="${#temporals.format(tx.createdAt, 'MMM d')}">Jan 1</span>
+                            </div>
+                        </div>
+                        
+                        <div th:if="${#lists.isEmpty(recentTransactions)}" class="no-activity">
+                            <p>No recent activity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <footer th:replace="~{fragments/layout :: footer}"></footer>
+        </main>
+    </div>
+    
+    <!-- Mobile Nav -->
+    <div th:replace="~{fragments/layout :: mobile-nav-student}"></div>
+    <div th:replace="~{fragments/layout :: mobile-menu-student}"></div>
+    
+    <script th:replace="~{fragments/layout :: scripts}"></script>
+    
+    <style>
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .stat-card {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .stat-card.rank-card {
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.08), #ffffff);
+            border-color: rgba(124, 93, 250, 0.2);
+        }
+        
+        [data-theme="dark"] .stat-card.rank-card {
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.15), #1e1e2e);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .stat-value {
+            color: #ffffff;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        [data-theme="dark"] .stat-label {
+            color: #999;
+        }
+        
+        /* Leaderboard Layout */
+        .leaderboard-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+        }
+        
+        /* Podium Section */
+        .podium-section {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .podium-section {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 16px;
+            min-height: 280px;
+        }
+        
+        .podium-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .podium-item.first {
+            order: 2;
+        }
+        
+        .podium-item.second {
+            order: 1;
+        }
+        
+        .podium-item.third {
+            order: 3;
+        }
+        
+        .crown {
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        
+        .podium-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c5dfa, #9f7aea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            border: 3px solid rgba(0, 0, 0, 0.08);
+        }
+        
+        [data-theme="dark"] .podium-avatar {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .podium-avatar.gold {
+            width: 80px;
+            height: 80px;
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, #ffd700, #ffb800);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        .podium-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        
+        [data-theme="dark"] .podium-name {
+            color: #ffffff;
+        }
+        
+        .podium-points {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        [data-theme="dark"] .podium-points {
+            color: #999;
+        }
+        
+        .podium-stand {
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+            border-radius: 12px 12px 0 0;
+            background: linear-gradient(180deg, rgba(124, 93, 250, 0.1), rgba(124, 93, 250, 0.03));
+            border: 1px solid rgba(124, 93, 250, 0.15);
+            border-bottom: none;
+        }
+        
+        .podium-stand.gold {
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+        
+        .podium-item.first .podium-stand {
+            height: 100px;
+        }
+        
+        .podium-item.second .podium-stand {
+            height: 70px;
+        }
+        
+        .podium-item.third .podium-stand {
+            height: 50px;
+        }
+        
+        .podium-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .podium-rank {
+            color: #ffffff;
+        }
+        
+        .medal {
+            font-size: 1.2rem;
+        }
+        
+        /* Ranking List */
+        .ranking-list {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .ranking-list {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .ranking-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 80px 80px 100px;
+            gap: 16px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(124, 93, 250, 0.05), transparent);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+        }
+        
+        [data-theme="dark"] .ranking-header {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+            color: #999;
+        }
+        
+        .ranking-item {
+            display: grid;
+            grid-template-columns: 60px 1fr 80px 80px 100px;
+            gap: 16px;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            align-items: center;
+            transition: background 0.2s;
+        }
+        
+        [data-theme="dark"] .ranking-item {
+            border-bottom-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        .ranking-item:hover {
+            background: rgba(124, 93, 250, 0.05);
+        }
+        
+        .ranking-item.current-user {
+            background: rgba(124, 93, 250, 0.08);
+        }
+        
+        .ranking-item:last-child {
+            border-bottom: none;
+        }
+        
+        .rank-badge {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: #f0f0f5;
+            color: #666;
+        }
+        
+        [data-theme="dark"] .rank-badge {
+            background: rgba(255, 255, 255, 0.08);
+            color: #999;
+        }
+        
+        .rank-badge.top-1, .rank-badge.top-2, .rank-badge.top-3 {
+            background: transparent;
+            font-size: 1.2rem;
+        }
+        
+        .user-col {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .user-avatar.you {
+            background: linear-gradient(135deg, #ffd700, #ffb800);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-name {
+            font-weight: 500;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .user-name {
+            color: #ffffff;
+        }
+        
+        .user-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: var(--accent);
+            color: white;
+        }
+        
+        .level-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(124, 93, 250, 0.1);
+            color: var(--accent);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .streak-col {
+            font-size: 0.9rem;
+        }
+        
+        .no-streak {
+            color: var(--text-muted);
+        }
+        
+        .points-col {
+            text-align: right;
+        }
+        
+        .points-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #7c5dfa;
+        }
+        
+        .points-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-left: 4px;
+        }
+        
+        [data-theme="dark"] .points-label {
+            color: #999;
+        }
+        
+        /* Badge Sidebar */
+        .badge-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .badge-section, .activity-section {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        [data-theme="dark"] .badge-section,
+        [data-theme="dark"] .activity-section {
+            background: #1e1e2e;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 16px 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        [data-theme="dark"] .section-title {
+            color: #ffffff;
+        }
+        
+        .badge-count {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        [data-theme="dark"] .badge-count {
+            color: #999;
+        }
+        
+        .earned-badges, .available-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .badge-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            transition: all 0.2s;
+        }
+        
+        [data-theme="dark"] .badge-item {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .badge-item.locked {
+            opacity: 0.6;
+        }
+        
+        .badge-item.earned {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .badge-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .badge-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .badge-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 0.9rem;
+        }
+        
+        [data-theme="dark"] .badge-name {
+            color: #ffffff;
+        }
+        
+        .badge-desc {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        [data-theme="dark"] .badge-desc {
+            color: #999;
+        }
+        
+        .badge-date {
+            font-size: 0.7rem;
+            color: #666;
+        }
+        
+        [data-theme="dark"] .badge-date {
+            color: #999;
+        }
+        
+        .badge-reward {
+            font-size: 0.7rem;
+            color: #7c5dfa;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .badge-status {
+            font-size: 0.9rem;
+        }
+        
+        .earned-check {
+            color: #10b981;
+            font-weight: 700;
+        }
+        
+        .locked-icon {
+            opacity: 0.5;
+        }
+        
+        .no-badges, .empty-leaderboard {
+            text-align: center;
+            padding: 24px;
+            color: #666;
+        }
+        
+        [data-theme="dark"] .no-badges,
+        [data-theme="dark"] .empty-leaderboard {
+            color: #999;
+        }
+        
+        .no-badges span, .empty-leaderboard span {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        /* Activity List */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: var(--hover-bg);
+            font-size: 0.85rem;
+        }
+        
+        .activity-points {
+            font-weight: 700;
+            min-width: 45px;
+        }
+        
+        .activity-points.positive {
+            color: #10b981;
+        }
+        
+        .activity-points.negative {
+            color: #ef4444;
+        }
+        
+        .activity-desc {
+            flex: 1;
+            color: var(--text);
+        }
+        
+        .activity-time {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+        
+        .no-activity {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .leaderboard-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .badge-sidebar {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .ranking-header, .ranking-item {
+                grid-template-columns: 40px 1fr 60px 80px;
+            }
+            
+            .level-col {
+                display: none;
+            }
+            
+            .badge-sidebar {
+                grid-template-columns: 1fr;
+            }
+            
+            .podium {
+                transform: scale(0.8);
+            }
+        }
+    </style>
+</body>
+</html>
