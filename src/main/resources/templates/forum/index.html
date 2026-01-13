@@ -1483,19 +1483,31 @@
             const title = document.getElementById('postTitle').value;
             const content = document.getElementById('postContent').value;
             
+            if (!title && !content) {
+                alert('Please enter a title or content before saving.');
+                return;
+            }
+            
             fetch('/forum/draft/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
                 body: JSON.stringify({ title, content, tagIds: selectedTags })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Draft saved!');
-                    closeComposeModal();
-                }
+            .then(response => {
+                if (!response.ok) throw new Error('Save failed');
+                return response.json();
             })
-            .catch(() => {
+            .then(data => {
+                alert('Draft saved!');
+                closeComposeModal();
+                // Reload page to show draft in sidebar
+                window.location.reload();
+            })
+            .catch((err) => {
+                console.error('Draft save error:', err);
                 alert('Could not save draft. Please try again.');
             });
         }
@@ -1503,12 +1515,43 @@
         // Load Draft
         function loadDraft(draftId) {
             fetch(`/forum/draft/${draftId}`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Load failed');
+                    return response.json();
+                })
                 .then(draft => {
                     document.getElementById('postTitle').value = draft.title || '';
                     document.getElementById('postContent').value = draft.content || '';
+                    // Update char count
+                    document.getElementById('charCount').textContent = (draft.content || '').length;
                     openComposeModal();
+                })
+                .catch((err) => {
+                    console.error('Draft load error:', err);
+                    alert('Could not load draft. Please try again.');
                 });
+        }
+        
+        // Delete Draft
+        function deleteDraft(draftId, event) {
+            if (event) event.stopPropagation();
+            
+            if (!confirm('Delete this draft?')) return;
+            
+            fetch(`/forum/draft/${draftId}`, {
+                method: 'DELETE',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Delete failed');
+                window.location.reload();
+            })
+            .catch((err) => {
+                console.error('Draft delete error:', err);
+                alert('Could not delete draft. Please try again.');
+            });
         }
         
         // Character count
