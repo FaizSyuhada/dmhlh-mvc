@@ -1291,7 +1291,108 @@
                 padding-bottom: 8px;
             }
         }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            max-width: 360px;
+        }
+        
+        [data-theme="dark"] .toast {
+            background: #2d2d44;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #ef4444; }
+        .toast.warning { border-color: #f59e0b; }
+        .toast.info { border-color: #7c5dfa; }
+        
+        .toast-icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        
+        .toast.success .toast-icon { color: #10b981; }
+        .toast.error .toast-icon { color: #ef4444; }
+        .toast.warning .toast-icon { color: #f59e0b; }
+        .toast.info .toast-icon { color: #7c5dfa; }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+        }
+        
+        [data-theme="dark"] .toast-title {
+            color: #ffffff;
+        }
+        
+        .toast-message {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        
+        [data-theme="dark"] .toast-message {
+            color: #9ca3af;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .toast-close:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        [data-theme="dark"] .toast-close:hover {
+            background: #3d3d5c;
+            color: #e2e8f0;
+        }
     </style>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
     
     <script th:inline="javascript">
         // State
@@ -1328,6 +1429,40 @@
         // Get CSRF token
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        
+        // Toast Notification System
+        function showToast(type, title, message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '<i class="bi bi-check-circle-fill"></i>',
+                error: '<i class="bi bi-x-circle-fill"></i>',
+                warning: '<i class="bi bi-exclamation-triangle-fill"></i>',
+                info: '<i class="bi bi-info-circle-fill"></i>'
+            };
+            
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || icons.info}</span>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
         
         // Like/Bookmark Actions
         function toggleLike(threadId, button) {
@@ -1415,11 +1550,11 @@
                     }
                     
                     // Show feedback
-                    alert(data.bookmarked ? 'Thread saved!' : 'Thread removed from saved');
+                    showToast('success', data.bookmarked ? 'Saved!' : 'Removed', data.bookmarked ? 'Thread added to your saved list' : 'Thread removed from saved');
                 })
                 .catch((err) => {
                     console.error('Save error:', err);
-                    alert('Could not save thread. Please try again.');
+                    showToast('error', 'Error', 'Could not save thread. Please try again.');
                 });
         }
         
@@ -1454,11 +1589,11 @@
                 .then(response => response.json())
                 .then(data => {
                     closeReportModal();
-                    alert('Report submitted. Thank you for helping keep our community safe.');
+                    showToast('success', 'Report Submitted', 'Thank you for helping keep our community safe');
                 })
                 .catch((err) => {
                     console.error('Report error:', err);
-                    alert('Could not submit report. Please try again.');
+                    showToast('error', 'Error', 'Could not submit report. Please try again.');
                 });
         }
         
@@ -1484,7 +1619,7 @@
             const content = document.getElementById('postContent').value;
             
             if (!title && !content) {
-                alert('Please enter a title or content before saving.');
+                showToast('warning', 'Empty Draft', 'Please enter a title or content before saving');
                 return;
             }
             
@@ -1501,14 +1636,14 @@
                 return response.json();
             })
             .then(data => {
-                alert('Draft saved!');
+                showToast('success', 'Draft Saved', 'Your draft has been saved');
                 closeComposeModal();
                 // Reload page to show draft in sidebar
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1000);
             })
             .catch((err) => {
                 console.error('Draft save error:', err);
-                alert('Could not save draft. Please try again.');
+                showToast('error', 'Error', 'Could not save draft. Please try again.');
             });
         }
         
@@ -1528,7 +1663,7 @@
                 })
                 .catch((err) => {
                     console.error('Draft load error:', err);
-                    alert('Could not load draft. Please try again.');
+                    showToast('error', 'Error', 'Could not load draft. Please try again.');
                 });
         }
         
@@ -1550,7 +1685,7 @@
             })
             .catch((err) => {
                 console.error('Draft delete error:', err);
-                alert('Could not delete draft. Please try again.');
+                showToast('error', 'Error', 'Could not delete draft. Please try again.');
             });
         }
         
